@@ -112,7 +112,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
             <div className="flex flex-wrap gap-2">
               <Badge
                 variant="secondary"
-                className="bg-card border border-border text-foreground text-sm px-3 py-1"
+                className="bg-card border border-border text-sm px-3 py-1 text-foreground font-medium"
               >
                 <Play className="w-3 h-3 mr-1.5" />
                 {videoData.ai_tool}
@@ -121,7 +121,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
               {videoData.genre && (
                 <Badge
                   variant="secondary"
-                  className="bg-card border border-border text-muted-foreground text-sm px-3 py-1"
+                  className="bg-card border border-border text-sm px-3 py-1 text-[#606060] dark:text-[#aaa] font-normal"
                 >
                   {videoData.genre}
                 </Badge>
@@ -129,14 +129,14 @@ export default async function VideoPage({ params }: VideoPageProps) {
 
               <Badge
                 variant="secondary"
-                className="bg-card border border-border text-muted-foreground text-sm px-3 py-1"
+                className="bg-card border border-border text-sm px-3 py-1 text-[#606060] dark:text-[#aaa] font-normal"
               >
                 {formatDuration(videoData.duration_seconds)}
               </Badge>
             </div>
 
             {/* Stats Row - Views, Date */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-[#606060] dark:text-[#aaa] font-normal">
               <div className="flex items-center gap-1.5">
                 <Eye className="w-4 h-4" />
                 <span>{videoData.view_count.toLocaleString()} views</span>
@@ -152,44 +152,48 @@ export default async function VideoPage({ params }: VideoPageProps) {
             <VideoRatingInteractive videoId={videoData.id} />
 
             {/* Creator & Description on Mobile */}
-            <div className="lg:hidden space-y-6">
+            <div className="lg:hidden">
               {/* Creator Info Card */}
-              <div className="bg-card border border-border rounded-xl p-6">
-                <div className="flex items-start gap-4">
-                  <Link href={`/creator/${videoData.creator.slug}`}>
-                    <Avatar className="w-12 h-12 ring-2 ring-border hover:ring-primary transition-all">
-                      <AvatarImage src={videoData.creator.avatar_url || undefined} alt={videoData.creator.name} />
-                      <AvatarFallback className="bg-muted text-foreground font-semibold">
-                        {videoData.creator.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Link>
-
-                  <div className="flex-1">
-                    <Link
-                      href={`/creator/${videoData.creator.slug}`}
-                      className="text-base font-semibold text-foreground hover:text-primary transition-colors"
-                    >
-                      {videoData.creator.name}
+              <div className="rounded-xl p-6" style={{ backgroundColor: 'hsl(217, 24%, 12%)', border: '1px solid hsl(215, 20%, 18%)' }}>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <Link href={`/creator/${videoData.creator.slug}`}>
+                      <Avatar className="w-12 h-12 ring-2 ring-border hover:ring-primary transition-all">
+                        <AvatarImage src={videoData.creator.avatar_url || undefined} alt={videoData.creator.name} />
+                        <AvatarFallback className="bg-muted text-foreground font-semibold">
+                          {videoData.creator.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
                     </Link>
-                    {videoData.creator.bio && (
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                        {videoData.creator.bio}
-                      </p>
-                    )}
+
+                    <div className="flex-1">
+                      <Link
+                        href={`/creator/${videoData.creator.slug}`}
+                        className="text-sm font-medium text-[#606060] dark:text-[#aaa] hover:text-primary transition-colors"
+                      >
+                        {videoData.creator.name}
+                      </Link>
+                      {videoData.creator.bio && (
+                        <p className="text-xs text-[#606060] dark:text-[#aaa] mt-1 opacity-70 leading-relaxed">
+                          {videoData.creator.bio}
+                        </p>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Description in same card */}
+                  {videoData.description && (
+                    <>
+                      <div className="border-t border-border pt-4">
+                        <h3 className="text-sm font-semibold text-foreground mb-3">Description</h3>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                          {videoData.description}
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
-
-              {/* Description */}
-              {videoData.description && (
-                <div className="bg-card border border-border rounded-xl p-6">
-                  <h2 className="text-lg font-semibold text-foreground mb-3">Description</h2>
-                  <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                    {videoData.description}
-                  </p>
-                </div>
-              )}
             </div>
 
           </div>
@@ -197,7 +201,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
           {/* Right Sidebar - Creator & Description (Desktop Only) */}
           <div className="hidden lg:block lg:col-span-1 space-y-6">
             {/* Creator Info Card */}
-            <div className="bg-card border border-border rounded-xl p-6 sticky top-24">
+            <div className="rounded-xl p-6 sticky top-24" style={{ backgroundColor: 'hsl(217, 24%, 12%)', border: '1px solid hsl(215, 20%, 18%)' }}>
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
                   <Link href={`/creator/${videoData.creator.slug}`}>
@@ -212,12 +216,12 @@ export default async function VideoPage({ params }: VideoPageProps) {
                   <div className="flex-1">
                     <Link
                       href={`/creator/${videoData.creator.slug}`}
-                      className="text-base font-semibold text-foreground hover:text-primary transition-colors"
+                      className="text-sm font-medium text-[#606060] dark:text-[#aaa] hover:text-primary transition-colors"
                     >
                       {videoData.creator.name}
                     </Link>
                     {videoData.creator.bio && (
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-xs text-[#606060] dark:text-[#aaa] mt-1 opacity-70 leading-relaxed">
                         {videoData.creator.bio}
                       </p>
                     )}
@@ -227,8 +231,8 @@ export default async function VideoPage({ params }: VideoPageProps) {
                 {/* Description in sidebar */}
                 {videoData.description && (
                   <>
-                    <div className="border-t border-border pt-4">
-                      <h3 className="text-sm font-semibold text-foreground mb-2">Description</h3>
+                    <div className="border-t border-border pt-6 mt-2">
+                      <h3 className="text-sm font-semibold text-foreground mb-3">Description</h3>
                       <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed line-clamp-6">
                         {videoData.description}
                       </p>

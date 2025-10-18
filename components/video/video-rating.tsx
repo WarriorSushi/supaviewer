@@ -202,7 +202,7 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
 
   return (
     <>
-      <div className="bg-card border border-border rounded-lg p-4">
+      <div className="rounded-lg p-4" style={{ backgroundColor: 'hsl(217, 24%, 12%)', border: '1px solid hsl(215, 20%, 22%)' }}>
         <div className="flex items-center justify-between gap-4">
           <span className="text-sm font-semibold text-foreground">Rate this video</span>
 
