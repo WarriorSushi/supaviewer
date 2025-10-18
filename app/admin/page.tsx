@@ -208,7 +208,7 @@ export default async function AdminDashboard() {
                       <div className="flex-1">
                         {activity.type === 'video' ? (
                           <p className="text-sm text-foreground">
-                            <span className="font-semibold">{activity.creator}</span>{' '}
+                            <span className="font-semibold">{'creator' in activity ? activity.creator : 'Unknown'}</span>{' '}
                             <span className="text-muted-foreground">{activity.action}</span>{' '}
                             <span className="font-medium">"{activity.title}"</span>
                           </p>
@@ -216,7 +216,7 @@ export default async function AdminDashboard() {
                           <p className="text-sm text-foreground">
                             <span className="text-muted-foreground">User rated</span>{' '}
                             <span className="font-medium">"{activity.title}"</span>{' '}
-                            <span className="font-semibold text-amber">{activity.rating}★</span>
+                            <span className="font-semibold text-amber">{'rating' in activity ? activity.rating : 0}★</span>
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">
@@ -225,7 +225,7 @@ export default async function AdminDashboard() {
                       </div>
 
                       {/* Status Badge */}
-                      {activity.type === 'video' && (
+                      {activity.type === 'video' && 'status' in activity && (
                         <span
                           className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
                             activity.status === 'pending'
