@@ -25,11 +25,11 @@ export default async function Home() {
   return (
     <div className="min-h-screen">
       {/* Main content with sidebar - YouTube-style spacing */}
-      <div className="flex gap-6 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-6">
+      <div className="flex gap-6 py-6">
 
         {/* Left Sidebar - Filters (Desktop only, mobile has it in navbar menu) */}
         {/* YouTube sidebar: 240px width */}
-        <aside className="hidden lg:block w-60 flex-shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin">
+        <aside className="hidden lg:block w-60 flex-shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin-left pl-2">
           <VideoFilters />
         </aside>
 

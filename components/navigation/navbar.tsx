@@ -23,9 +23,9 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 glass border-b border-border">
+    <nav className="sticky top-0 z-50 glass">
       <div className="container-custom">
-        <div className="flex items-center justify-between h-16 gap-4 md:gap-6">
+        <div className="flex items-center justify-between h-12 md:h-16 gap-4 md:gap-6">
           {/* Logo - Smaller on desktop to make room for search */}
           {!showMobileSearch && (
             <Link

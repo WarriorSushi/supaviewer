@@ -155,7 +155,6 @@
   .glass {
     background-color: rgba(20, 25, 33, 0.7);
     backdrop-filter: blur(12px);
-    border: 1px solid #2A3443;
   }
 
   /* Gradient text effects */
@@ -280,6 +279,32 @@
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: #3B82F6;
+}
+
+/* Left-side scrollbar for filter sidebar */
+.scrollbar-thin-left {
+  direction: rtl;
+}
+
+.scrollbar-thin-left > * {
+  direction: ltr;
+}
+
+.scrollbar-thin-left::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin-left::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.scrollbar-thin-left::-webkit-scrollbar-thumb {
+  background-color: #2A3443;
+  border-radius: 3px;
+}
+
+.scrollbar-thin-left::-webkit-scrollbar-thumb:hover {
   background-color: #3B82F6;
 }
 

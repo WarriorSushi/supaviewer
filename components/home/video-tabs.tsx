@@ -19,32 +19,32 @@ export function VideoTabs({ onTabChange }: VideoTabsProps) {
   }
 
   return (
-    <div className="sticky top-16 z-30 bg-background border-b border-border mb-6">
+    <div className="sticky top-12 md:top-16 z-30 glass mb-6">
       <Tabs
         value={value}
         onValueChange={handleChange}
         className="w-full"
       >
-        <TabsList className="w-full grid grid-cols-3 h-12 rounded-none bg-transparent p-0">
+        <TabsList className="w-full grid grid-cols-3 h-9 md:h-10 rounded-none bg-transparent p-0">
           <TabsTrigger
             value="featured"
-            className="gap-2 rounded-none border-b-[3px] !border-b-transparent data-[state=active]:!border-b-[#DC2626] data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground hover:text-foreground"
+            className="gap-1.5 md:gap-2 text-xs md:text-sm rounded-none border-b-[2px] md:border-b-[2px] !border-b-transparent data-[state=active]:!border-b-[#DC2626] data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground hover:text-foreground"
           >
-            <Star className="w-4 h-4" />
+            <Star className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Featured
           </TabsTrigger>
           <TabsTrigger
             value="trending"
-            className="gap-2 rounded-none border-b-[3px] !border-b-transparent data-[state=active]:!border-b-[#DC2626] data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground hover:text-foreground"
+            className="gap-1.5 md:gap-2 text-xs md:text-sm rounded-none border-b-[2px] md:border-b-[2px] !border-b-transparent data-[state=active]:!border-b-[#DC2626] data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground hover:text-foreground"
           >
-            <TrendingUp className="w-4 h-4" />
+            <TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Trending
           </TabsTrigger>
           <TabsTrigger
             value="latest"
-            className="gap-2 rounded-none border-b-[3px] !border-b-transparent data-[state=active]:!border-b-[#DC2626] data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground hover:text-foreground"
+            className="gap-1.5 md:gap-2 text-xs md:text-sm rounded-none border-b-[2px] md:border-b-[2px] !border-b-transparent data-[state=active]:!border-b-[#DC2626] data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground hover:text-foreground"
           >
-            <Clock className="w-4 h-4" />
+            <Clock className="w-3.5 h-3.5 md:w-4 md:h-4" />
             Latest
           </TabsTrigger>
         </TabsList>

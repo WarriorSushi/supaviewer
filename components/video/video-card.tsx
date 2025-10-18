@@ -21,10 +21,10 @@ export function VideoCard({ video, priority = false, featured = false }: VideoCa
   return (
     <Link href={`/video/${video.id}`} className="group block">
       {/* YouTube-inspired card: Neutral container, bright content */}
-      <div className="bg-card rounded-xl overflow-hidden transition-all duration-250 hover:-translate-y-1 hover:shadow-[0_8px_20px_hsl(var(--border)/0.15)]">
+      <div className="bg-card rounded-none md:rounded-xl overflow-hidden transition-all duration-250 hover:-translate-y-1 hover:shadow-[0_8px_20px_hsl(var(--border)/0.15)]">
 
         {/* Thumbnail - 80% of card visual weight */}
-        <div className="relative aspect-video overflow-hidden bg-background rounded-t-xl">
+        <div className="relative aspect-video overflow-hidden bg-background rounded-t-none md:rounded-t-xl">
           {imageError ? (
             // Fallback placeholder
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-crimson/20 to-amber/20">
@@ -73,12 +73,6 @@ export function VideoCard({ video, priority = false, featured = false }: VideoCa
 
           {/* TERTIARY: Meta Info - YouTube spec: 12px, same gray as channel */}
           <div className="flex items-center gap-1.5 text-[0.75rem] font-normal text-[#606060] dark:text-[#aaa]">
-            {/* AI Tool */}
-            <span>{video.ai_tool}</span>
-
-            {/* Dot separator */}
-            <span>•</span>
-
             {/* Rating */}
             <div className="flex items-center gap-1">
               <Star className="w-3 h-3 fill-amber text-amber" />
@@ -95,6 +89,12 @@ export function VideoCard({ video, priority = false, featured = false }: VideoCa
                 <span>{video.genre}</span>
               </>
             )}
+
+            {/* Dot separator */}
+            <span>•</span>
+
+            {/* AI Tool */}
+            <span>{video.ai_tool}</span>
           </div>
         </div>
       </div>

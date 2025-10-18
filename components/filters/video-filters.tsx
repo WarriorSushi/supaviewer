@@ -45,14 +45,14 @@ export function VideoFilters() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold">Filters</h3>
+        <h3 className="text-sm font-semibold">Filters</h3>
         {(selectedTools.length > 0 || selectedGenres.length > 0) && (
           <button
             onClick={clearAll}
-            className="text-sm text-primary hover:text-primary/80 transition-colors"
+            className="text-xs text-primary hover:text-primary/80 transition-colors"
           >
             Clear all
           </button>
@@ -62,8 +62,8 @@ export function VideoFilters() {
       <Separator className="bg-border" />
 
       {/* Sort By - moved first */}
-      <div className="space-y-3 pr-2">
-        <h4 className="text-sm font-semibold text-foreground">Sort By</h4>
+      <div className="space-y-2 pr-2">
+        <h4 className="text-xs font-semibold text-foreground">Sort By</h4>
         <Select value={sortBy} onValueChange={setSortBy}>
           <SelectTrigger className="w-full">
             <SelectValue />
@@ -81,19 +81,20 @@ export function VideoFilters() {
       <Separator className="bg-border" />
 
       {/* Genres - moved second */}
-      <div className="space-y-3">
-        <h4 className="text-sm font-semibold text-foreground">Genre</h4>
-        <div className="space-y-2">
+      <div className="space-y-2">
+        <h4 className="text-xs font-semibold text-foreground">Genre</h4>
+        <div className="space-y-1.5">
           {GENRES.map((genre) => (
-            <div key={genre} className="flex items-center gap-3">
+            <div key={genre} className="flex items-center gap-2">
               <Checkbox
                 id={`genre-${genre}`}
                 checked={selectedGenres.includes(genre)}
                 onCheckedChange={() => toggleGenre(genre)}
+                className="h-3.5 w-3.5"
               />
               <Label
                 htmlFor={`genre-${genre}`}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 {genre}
               </Label>
@@ -105,19 +106,20 @@ export function VideoFilters() {
       <Separator className="bg-border" />
 
       {/* AI Tools - moved third */}
-      <div className="space-y-3">
-        <h4 className="text-sm font-semibold text-foreground">AI Tool</h4>
-        <div className="space-y-2">
+      <div className="space-y-2">
+        <h4 className="text-xs font-semibold text-foreground">AI Tool</h4>
+        <div className="space-y-1.5">
           {AI_TOOLS.map((tool) => (
-            <div key={tool} className="flex items-center gap-3">
+            <div key={tool} className="flex items-center gap-2">
               <Checkbox
                 id={`tool-${tool}`}
                 checked={selectedTools.includes(tool)}
                 onCheckedChange={() => toggleTool(tool)}
+                className="h-3.5 w-3.5"
               />
               <Label
                 htmlFor={`tool-${tool}`}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 {tool}
               </Label>
