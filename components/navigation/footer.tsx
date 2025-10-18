@@ -23,8 +23,8 @@ export function Footer() {
             <h4 className="font-semibold text-foreground mb-4">Platform</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/discover" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
-                  Discover Videos
+                <Link href="/" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
+                  Browse Videos
                 </Link>
               </li>
               <li>
@@ -74,9 +74,7 @@ export function Footer() {
             &copy; {currentYear} SupaViewer. All rights reserved.
           </p>
           <p className="text-muted-foreground text-sm mt-2 sm:mt-0">
-            Built with{" "}
-            <span className="text-crimson">♥</span>
-            {" "}for the AI cinema community
+            Built for the AI cinema community
           </p>
         </div>
       </div>

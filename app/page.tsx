@@ -1,13 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
-import { HeroSection } from '@/components/home/hero-section'
-import { CategoryTabs } from '@/components/home/category-tabs'
-import { VideoCard } from '@/components/video/video-card'
+import { VideoFilters } from '@/components/filters/video-filters'
+import { VideoGridWithTabs } from '@/components/home/video-grid-with-tabs'
 import type { VideoWithCreator } from '@/types'
 
 export default async function Home() {
-  // Fetch all approved videos (we'll show all for now, filtering can be added later)
   const supabase = await createClient()
 
+  // Fetch all approved videos
   const { data: videos } = await supabase
     .from('videos')
     .select(`
@@ -21,38 +20,25 @@ export default async function Home() {
     `)
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
-    .limit(20)
+    .limit(24)
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <HeroSection />
+      {/* Main content with sidebar - YouTube-style spacing */}
+      <div className="flex gap-6 px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-6">
 
-      {/* Category Tabs */}
-      <CategoryTabs />
+        {/* Left Sidebar - Filters (Desktop only, mobile has it in navbar menu) */}
+        {/* YouTube sidebar: 240px width */}
+        <aside className="hidden lg:block w-60 flex-shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin">
+          <VideoFilters />
+        </aside>
 
-      {/* Videos Grid */}
-      <section className="py-8">
-        <div className="container-custom">
-          {videos && videos.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {videos.map((video, index) => (
-                <VideoCard
-                  key={video.id}
-                  video={video as VideoWithCreator}
-                  priority={index < 4}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-20">
-              <p className="text-xl text-muted-foreground">
-                No videos yet. Be the first to submit!
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
+        {/* Main Content Area */}
+        <main className="flex-1 min-w-0">
+          <VideoGridWithTabs videos={videos as VideoWithCreator[] || []} />
+        </main>
+
+      </div>
     </div>
   )
 }
