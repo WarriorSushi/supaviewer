@@ -330,7 +330,7 @@ export default async function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Avg Ratings/Video</span>
                 <span className="text-sm font-semibold text-foreground">
-                  {approvedCount > 0
+                  {(approvedCount || 0) > 0
                     ? ((totalRatings || 0) / (approvedCount || 1)).toFixed(1)
                     : '0.0'}
                 </span>
