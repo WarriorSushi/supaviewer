@@ -185,7 +185,7 @@ export default async function AdminDashboard() {
                   <div
                     className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                       activity.type === 'video'
-                        ? activity.status === 'pending'
+                        ? ('status' in activity && activity.status === 'pending')
                           ? 'bg-amber/10'
                           : 'bg-green-500/10'
                         : 'bg-blue-500/10'
@@ -194,7 +194,7 @@ export default async function AdminDashboard() {
                     {activity.type === 'video' ? (
                       <Video
                         className={`w-5 h-5 ${
-                          activity.status === 'pending' ? 'text-amber' : 'text-green-500'
+                          ('status' in activity && activity.status === 'pending') ? 'text-amber' : 'text-green-500'
                         }`}
                       />
                     ) : (
