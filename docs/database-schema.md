@@ -125,9 +125,9 @@ Stores individual ratings from users.
 - `updated_at` - Timestamp with timezone, Default: `now()`
 - `video_id` - UUID, Foreign Key to `videos.id`, NOT NULL
 - `user_id` - UUID, Foreign Key to `auth.users.id`, NOT NULL
-- `rating` - Integer, NOT NULL
-  - Rating value from 1 to 10
-  - 10 = highest quality
+- `rating` - Decimal(2,1), NOT NULL
+  - Rating value from 1.0 to 5.0 (half-star precision)
+  - 5.0 = highest quality
 
 **Indexes**:
 - Primary key on `id`
@@ -138,7 +138,7 @@ Stores individual ratings from users.
 **Constraints**:
 - Foreign key: `video_id` references `videos(id)` ON DELETE CASCADE
 - Foreign key: `user_id` references `auth.users(id)` ON DELETE CASCADE
-- Check constraint: `rating` >= 1 AND `rating` <= 10
+- Check constraint: `rating` >= 1.0 AND `rating` <= 5.0
 - Unique constraint: `(video_id, user_id)` - prevents duplicate ratings
 
 ---
@@ -407,7 +407,7 @@ Before inserting into database:
 
 **Ratings**:
 - User hasn't already rated this video
-- Rating is integer 1-10
+- Rating is decimal 1.0-5.0 (0.5 increments)
 
 **Creators**:
 - Slug generation from name (lowercase, replace spaces with hyphens)

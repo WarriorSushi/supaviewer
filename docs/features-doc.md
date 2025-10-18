@@ -93,7 +93,8 @@ These are the essential features needed for launch. Focus on these exclusively u
 ---
 
 #### Rating System
-- **Star Rating**: 1-10 scale (or 1-5 stars, each worth 2 points)
+- **Star Rating**: 1-5 star scale with half-star precision (0.5 increments)
+- **Interactive Stars**: Stars fill on hover for visual feedback
 - **One Rating Per User Per Video**: Enforce uniqueness
 - **Update Rating**: Users can change their rating
 - **Delete Rating**: Users can remove their rating

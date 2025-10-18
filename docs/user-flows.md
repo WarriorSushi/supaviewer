@@ -107,17 +107,18 @@ This document maps out all user journeys through SupaViewer. Each flow describes
 
 1. Logged-in user views video
    - "Rate this video" button is active
-   - If user already rated, shows: "Your rating: X/10" with edit option
+   - If user already rated, shows: "Your rating: X/5" with edit option
 
 2. User clicks to rate
-   - Rating interface appears (1-10 stars or slider)
-   - User selects rating (1-10)
+   - Rating interface appears (5 interactive stars)
+   - Stars fill on hover for visual feedback
+   - User selects rating (1-5 stars, half-star precision)
 
 3. First-time rating:
    - User clicks submit
    - System validates:
      - User is authenticated
-     - Rating is 1-10
+     - Rating is 1-5 (with 0.5 increments)
      - User hasn't already rated this video
    - System inserts rating into database
    - System recalculates video average and total ratings
@@ -422,7 +423,7 @@ This document maps out all user journeys through SupaViewer. Each flow describes
    - Available filters:
      - AI Tool (multi-select checkboxes)
      - Genre (multi-select checkboxes)
-     - Minimum rating (slider: 1-10)
+     - Minimum rating (slider: 1-5 stars)
      - Duration (ranges: 30s-1min, 1-3min, 3-5min, 5min+)
    - Filters applied immediately (URL params update)
    - Results update without page reload

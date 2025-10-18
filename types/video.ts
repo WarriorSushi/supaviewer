@@ -25,5 +25,6 @@ export interface VideoWithCreator extends Video {
     name: string
     slug: string
     avatar_url: string | null
+    bio: string | null
   }
 }

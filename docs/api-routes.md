@@ -368,7 +368,7 @@ All responses return JSON with consistent structure:
 
 **Logic**:
 1. Check user is authenticated (401 if not)
-2. Validate rating (1-10)
+2. Validate rating (1.0-5.0, 0.5 increments)
 3. Check video exists and is approved
 4. Check if user already rated this video:
    - If yes, update existing rating

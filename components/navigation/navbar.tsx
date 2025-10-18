@@ -82,12 +82,9 @@ export function Navbar() {
               </Link>
             </Button>
 
-            {/* Auth Buttons */}
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/login">Login</Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link href="/signup">Sign Up</Link>
+            {/* Single Sign In Button */}
+            <Button size="sm" variant="outline" asChild>
+              <Link href="/auth">Sign In</Link>
             </Button>
           </div>
 
@@ -132,28 +129,28 @@ export function Navbar() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-4 border-t border-border max-h-[calc(100vh-4rem)] overflow-y-auto">
+            {/* Sign In Button - Above Filters */}
+            <div className="px-4">
+              <Button variant="outline" className="w-full" asChild>
+                <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
+                  Sign In
+                </Link>
+              </Button>
+            </div>
+
             {/* Filters */}
-            <div className="pb-4">
+            <div className="pb-4 border-t border-border pt-4">
               <VideoFilters />
             </div>
 
             <div className="border-t border-border pt-4">
               <Link
                 href="/about"
-                className="block text-muted-foreground hover:text-foreground font-semibold transition-colors"
+                className="block text-muted-foreground hover:text-foreground font-semibold transition-colors px-4"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 About
               </Link>
-            </div>
-
-            <div className="pt-4 space-y-3">
-              <Button variant="ghost" className="w-full" asChild>
-                <Link href="/login">Login</Link>
-              </Button>
-              <Button className="w-full" asChild>
-                <Link href="/signup">Sign Up</Link>
-              </Button>
             </div>
           </div>
         )}
