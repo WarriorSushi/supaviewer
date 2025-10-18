@@ -9,9 +9,15 @@ type Tab = 'featured' | 'trending' | 'latest'
 
 interface VideoGridWithTabsProps {
   videos: VideoWithCreator[]
+  searchQuery?: string
+  activeFilters?: number
 }
 
-export function VideoGridWithTabs({ videos }: VideoGridWithTabsProps) {
+export function VideoGridWithTabs({
+  videos,
+  searchQuery = '',
+  activeFilters = 0,
+}: VideoGridWithTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('featured')
 
   const filteredVideos = useMemo(() => {
@@ -31,6 +37,25 @@ export function VideoGridWithTabs({ videos }: VideoGridWithTabsProps) {
 
   return (
     <>
+      {/* Search/Filter Results Header */}
+      {(searchQuery || activeFilters > 0) && (
+        <div className="mb-6 px-4 md:px-0">
+          <p className="text-sm text-muted-foreground">
+            {filteredVideos.length === 0 ? (
+              <>No videos found matching your criteria</>
+            ) : (
+              <>
+                Found {filteredVideos.length} video
+                {filteredVideos.length !== 1 ? 's' : ''}
+                {searchQuery && (
+                  <> matching &ldquo;<span className="font-medium">{searchQuery}</span>&rdquo;</>
+                )}
+              </>
+            )}
+          </p>
+        </div>
+      )}
+
       {/* Tabs */}
       <VideoTabs onTabChange={setActiveTab} />
 
@@ -50,7 +75,9 @@ export function VideoGridWithTabs({ videos }: VideoGridWithTabsProps) {
         ) : (
           <div className="text-center py-20">
             <p className="text-xl text-muted-foreground">
-              No videos in this category yet.
+              {searchQuery || activeFilters > 0
+                ? 'No videos found matching your criteria.'
+                : 'No videos in this category yet.'}
             </p>
           </div>
         )}

@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -12,8 +11,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-const AI_TOOLS = ['Sora', 'Runway', 'Kling', 'Luma', 'Pika', 'Midjourney', 'Stable Diffusion', 'Other']
-const GENRES = ['Sci-Fi', 'Drama', 'Comedy', 'Horror', 'Documentary', 'Abstract', 'Music Video', 'Tutorial', 'Other']
+const AI_TOOLS = ['Sora', 'Runway Gen-3', 'Runway Gen-2', 'Kling', 'Luma', 'Pika', 'Midjourney', 'Stable Video Diffusion', 'AnimateDiff', 'Multiple Tools', 'Other']
+const GENRES = ['Sci-Fi', 'Drama', 'Comedy', 'Horror', 'Documentary', 'Abstract', 'Music Video', 'Experimental', 'Nature', 'Narrative', 'Tutorial', 'Other']
 const SORT_OPTIONS = [
   { label: 'Newest First', value: 'newest' },
   { label: 'Oldest First', value: 'oldest' },
@@ -21,27 +20,38 @@ const SORT_OPTIONS = [
   { label: 'Most Viewed', value: 'views' },
 ]
 
-export function VideoFilters() {
-  const [selectedTools, setSelectedTools] = useState<string[]>([])
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([])
-  const [sortBy, setSortBy] = useState('newest')
+interface FilterState {
+  selectedTools: string[]
+  selectedGenres: string[]
+  sortBy: string
+}
 
+interface VideoFiltersProps {
+  filters: FilterState
+  onFiltersChange: (filters: FilterState) => void
+}
+
+export function VideoFilters({ filters, onFiltersChange }: VideoFiltersProps) {
   const toggleTool = (tool: string) => {
-    setSelectedTools(prev =>
-      prev.includes(tool) ? prev.filter(t => t !== tool) : [...prev, tool]
-    )
+    const newTools = filters.selectedTools.includes(tool)
+      ? filters.selectedTools.filter((t) => t !== tool)
+      : [...filters.selectedTools, tool]
+    onFiltersChange({ ...filters, selectedTools: newTools })
   }
 
   const toggleGenre = (genre: string) => {
-    setSelectedGenres(prev =>
-      prev.includes(genre) ? prev.filter(g => g !== genre) : [...prev, genre]
-    )
+    const newGenres = filters.selectedGenres.includes(genre)
+      ? filters.selectedGenres.filter((g) => g !== genre)
+      : [...filters.selectedGenres, genre]
+    onFiltersChange({ ...filters, selectedGenres: newGenres })
   }
 
   const clearAll = () => {
-    setSelectedTools([])
-    setSelectedGenres([])
-    setSortBy('newest')
+    onFiltersChange({
+      selectedTools: [],
+      selectedGenres: [],
+      sortBy: 'newest',
+    })
   }
 
   return (
@@ -49,7 +59,7 @@ export function VideoFilters() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Filters</h3>
-        {(selectedTools.length > 0 || selectedGenres.length > 0) && (
+        {(filters.selectedTools.length > 0 || filters.selectedGenres.length > 0) && (
           <button
             onClick={clearAll}
             className="text-xs text-primary hover:text-primary/80 transition-colors"
@@ -64,7 +74,10 @@ export function VideoFilters() {
       {/* Sort By - moved first */}
       <div className="space-y-2 pr-2">
         <h4 className="text-xs font-semibold text-foreground">Sort By</h4>
-        <Select value={sortBy} onValueChange={setSortBy}>
+        <Select
+          value={filters.sortBy}
+          onValueChange={(value) => onFiltersChange({ ...filters, sortBy: value })}
+        >
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -88,7 +101,7 @@ export function VideoFilters() {
             <div key={genre} className="flex items-center gap-2">
               <Checkbox
                 id={`genre-${genre}`}
-                checked={selectedGenres.includes(genre)}
+                checked={filters.selectedGenres.includes(genre)}
                 onCheckedChange={() => toggleGenre(genre)}
                 className="h-3.5 w-3.5"
               />
@@ -113,7 +126,7 @@ export function VideoFilters() {
             <div key={tool} className="flex items-center gap-2">
               <Checkbox
                 id={`tool-${tool}`}
-                checked={selectedTools.includes(tool)}
+                checked={filters.selectedTools.includes(tool)}
                 onCheckedChange={() => toggleTool(tool)}
                 className="h-3.5 w-3.5"
               />
