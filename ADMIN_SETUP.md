@@ -9,8 +9,7 @@ Admin access in SupaViewer is controlled through email-based authentication. The
 
 ## Current Admin Users
 
-Currently, the following email has admin access:
-- `drsyedirfan93@gmail.com`
+Admin users are configured via the `ADMIN_EMAILS` environment variable (comma-separated list).
 
 ## How Admin Access Works
 
@@ -32,7 +31,7 @@ CREATE POLICY "Admins can insert videos"
     EXISTS (
       SELECT 1 FROM auth.users
       WHERE auth.users.id = auth.uid()
-      AND auth.users.email = 'drsyedirfan93@gmail.com'
+      AND auth.users.email = 'admin@example.com'
     )
   );
 ```
@@ -49,7 +48,10 @@ The application uses the `isAdmin()` helper function from `lib/admin-auth.ts` to
 export function isAdmin(user: User | null): boolean {
   if (!user || !user.email) return false
 
-  const adminEmails = ['drsyedirfan93@gmail.com']
+  // Admin emails from environment variable (comma-separated)
+  const adminEmailsString = process.env.ADMIN_EMAILS || ''
+  const adminEmails = adminEmailsString.split(',').map(email => email.trim()).filter(Boolean)
+
   return adminEmails.includes(user.email)
 }
 ```
@@ -64,10 +66,10 @@ Edit `supabase/migrations/001_initial_schema.sql` (or create a new migration) an
 
 ```sql
 -- Find all instances of:
-AND auth.users.email = 'drsyedirfan93@gmail.com'
+AND auth.users.email = 'admin@example.com'
 
 -- Change to:
-AND auth.users.email IN ('drsyedirfan93@gmail.com', 'newadmin@example.com')
+AND auth.users.email IN ('admin@example.com', 'newadmin@example.com')
 ```
 
 Then run the migration:
@@ -81,17 +83,11 @@ supabase db push   # For production
 
 Edit `lib/admin-auth.ts`:
 
-```typescript
-export function isAdmin(user: User | null): boolean {
-  if (!user || !user.email) return false
+Update the `ADMIN_EMAILS` environment variable:
 
-  const adminEmails = [
-    'drsyedirfan93@gmail.com',
-    'newadmin@example.com'  // Add new admin email
-  ]
-
-  return adminEmails.includes(user.email)
-}
+```env
+# In .env.local
+ADMIN_EMAILS=admin@example.com,newadmin@example.com
 ```
 
 ## Authentication Flow
@@ -148,8 +144,14 @@ Admins have access to:
 
 ## Environment Variables
 
-No environment variables are needed for admin authentication. Admin access is hardcoded in:
-- Database migrations
-- Application code
+Admin authentication requires the `ADMIN_EMAILS` environment variable:
 
-This is intentional for security - admin access can't be changed via environment variables.
+```env
+# Comma-separated list of admin email addresses
+ADMIN_EMAILS=your-email@example.com,another-admin@example.com
+```
+
+**Important**:
+- This controls application-level admin checks
+- Database RLS policies must also be updated to match
+- Never commit your actual admin emails to the repository

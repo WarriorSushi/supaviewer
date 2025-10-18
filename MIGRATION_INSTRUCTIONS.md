@@ -42,7 +42,7 @@
 **Row Level Security (RLS):**
 - All tables have RLS enabled
 - Policies control who can read/write data
-- Admin access: drsyedirfan93@gmail.com
+- Admin access controlled via environment variables and database policies
 
 **Triggers:**
 - Auto-update `updated_at` timestamps

@@ -35,7 +35,7 @@ CREATE POLICY "Admins can insert creators"
   FOR INSERT
   WITH CHECK (
     auth.uid() IS NOT NULL AND
-    auth.jwt() ->> 'email' = 'drsyedirfan93@gmail.com'
+    auth.jwt() ->> 'email' = 'admin@example.com'
   );
 
 -- Admins and creators can update profiles
@@ -44,7 +44,7 @@ CREATE POLICY "Creators can update their own profile"
   FOR UPDATE
   USING (
     user_id = auth.uid() OR
-    (auth.uid() IS NOT NULL AND auth.jwt() ->> 'email' = 'drsyedirfan93@gmail.com')
+    (auth.uid() IS NOT NULL AND auth.jwt() ->> 'email' = 'admin@example.com')
   );
 
 -- Only admins can delete creators
@@ -53,7 +53,7 @@ CREATE POLICY "Admins can delete creators"
   FOR DELETE
   USING (
     auth.uid() IS NOT NULL AND
-    auth.jwt() ->> 'email' = 'drsyedirfan93@gmail.com'
+    auth.jwt() ->> 'email' = 'admin@example.com'
   );
 
 -- ---------------------------------------------------------------------------
@@ -72,7 +72,7 @@ CREATE POLICY "Anyone can view approved videos"
       auth.uid() IS NOT NULL AND
       (
         creator_id IN (SELECT id FROM public.creators WHERE user_id = auth.uid()) OR
-        auth.jwt() ->> 'email' = 'drsyedirfan93@gmail.com'
+        auth.jwt() ->> 'email' = 'admin@example.com'
       )
     )
   );
@@ -83,7 +83,7 @@ CREATE POLICY "Admins can insert videos"
   FOR INSERT
   WITH CHECK (
     auth.uid() IS NOT NULL AND
-    auth.jwt() ->> 'email' = 'drsyedirfan93@gmail.com'
+    auth.jwt() ->> 'email' = 'admin@example.com'
   );
 
 -- Only admins can update videos
@@ -92,7 +92,7 @@ CREATE POLICY "Admins can update videos"
   FOR UPDATE
   USING (
     auth.uid() IS NOT NULL AND
-    auth.jwt() ->> 'email' = 'drsyedirfan93@gmail.com'
+    auth.jwt() ->> 'email' = 'admin@example.com'
   );
 
 -- Only admins can delete videos
@@ -101,7 +101,7 @@ CREATE POLICY "Admins can delete videos"
   FOR DELETE
   USING (
     auth.uid() IS NOT NULL AND
-    auth.jwt() ->> 'email' = 'drsyedirfan93@gmail.com'
+    auth.jwt() ->> 'email' = 'admin@example.com'
   );
 
 -- =============================================================================

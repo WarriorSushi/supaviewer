@@ -212,7 +212,7 @@ CREATE POLICY "Admins can insert creators"
     EXISTS (
       SELECT 1 FROM auth.users
       WHERE auth.users.id = auth.uid()
-      AND auth.users.email = 'drsyedirfan93@gmail.com'
+      AND auth.users.email = 'admin@example.com'
     )
   );
 
@@ -225,7 +225,7 @@ CREATE POLICY "Creators can update their own profile"
     EXISTS (
       SELECT 1 FROM auth.users
       WHERE auth.users.id = auth.uid()
-      AND auth.users.email = 'drsyedirfan93@gmail.com'
+      AND auth.users.email = 'admin@example.com'
     )
   );
 
@@ -237,7 +237,7 @@ CREATE POLICY "Admins can delete creators"
     EXISTS (
       SELECT 1 FROM auth.users
       WHERE auth.users.id = auth.uid()
-      AND auth.users.email = 'drsyedirfan93@gmail.com'
+      AND auth.users.email = 'admin@example.com'
     )
   );
 
@@ -255,7 +255,7 @@ CREATE POLICY "Anyone can view approved videos"
     EXISTS (
       SELECT 1 FROM auth.users
       WHERE auth.users.id = auth.uid()
-      AND auth.users.email = 'drsyedirfan93@gmail.com'
+      AND auth.users.email = 'admin@example.com'
     )
   );
 
@@ -267,7 +267,7 @@ CREATE POLICY "Admins can insert videos"
     EXISTS (
       SELECT 1 FROM auth.users
       WHERE auth.users.id = auth.uid()
-      AND auth.users.email = 'drsyedirfan93@gmail.com'
+      AND auth.users.email = 'admin@example.com'
     )
   );
 
@@ -279,7 +279,7 @@ CREATE POLICY "Admins can update videos"
     EXISTS (
       SELECT 1 FROM auth.users
       WHERE auth.users.id = auth.uid()
-      AND auth.users.email = 'drsyedirfan93@gmail.com'
+      AND auth.users.email = 'admin@example.com'
     )
   );
 
@@ -291,7 +291,7 @@ CREATE POLICY "Admins can delete videos"
     EXISTS (
       SELECT 1 FROM auth.users
       WHERE auth.users.id = auth.uid()
-      AND auth.users.email = 'drsyedirfan93@gmail.com'
+      AND auth.users.email = 'admin@example.com'
     )
   );
 
@@ -326,7 +326,7 @@ CREATE POLICY "Users can delete their own ratings"
     EXISTS (
       SELECT 1 FROM auth.users
       WHERE auth.users.id = auth.uid()
-      AND auth.users.email = 'drsyedirfan93@gmail.com'
+      AND auth.users.email = 'admin@example.com'
     )
   );
 
@@ -344,7 +344,7 @@ CREATE POLICY "Admins and users can view their own submissions"
     EXISTS (
       SELECT 1 FROM auth.users
       WHERE auth.users.id = auth.uid()
-      AND auth.users.email = 'drsyedirfan93@gmail.com'
+      AND auth.users.email = 'admin@example.com'
     )
   );
 
@@ -362,7 +362,7 @@ CREATE POLICY "Admins can update submissions"
     EXISTS (
       SELECT 1 FROM auth.users
       WHERE auth.users.id = auth.uid()
-      AND auth.users.email = 'drsyedirfan93@gmail.com'
+      AND auth.users.email = 'admin@example.com'
     )
   );
 
@@ -374,7 +374,7 @@ CREATE POLICY "Admins can delete submissions"
     EXISTS (
       SELECT 1 FROM auth.users
       WHERE auth.users.id = auth.uid()
-      AND auth.users.email = 'drsyedirfan93@gmail.com'
+      AND auth.users.email = 'admin@example.com'
     )
   );
 
@@ -803,7 +803,7 @@ BEGIN
   RAISE NOTICE 'Seed data has been inserted successfully!';
   RAISE NOTICE '';
   RAISE NOTICE 'IMPORTANT NOTES:';
-  RAISE NOTICE '  1. Admin access is hardcoded for: drsyedirfan93@gmail.com';
+  RAISE NOTICE '  1. Admin access is hardcoded for: admin@example.com';
   RAISE NOTICE '  2. Video ratings will start as NULL - first user ratings will populate them';
   RAISE NOTICE '  3. Replace placeholder YouTube IDs with real AI-generated videos before production';
 END $$;
