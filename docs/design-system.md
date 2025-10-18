@@ -11,54 +11,116 @@ SupaViewer's design should feel like a prestigious film festival website meets m
 - **Fast & Snappy**: Smooth animations, instant feedback
 - **Accessible**: WCAG 2.1 AA compliance minimum
 
+### YouTube-Inspired Card Design Ideology
+
+We follow YouTube's proven visual principles for video card design:
+
+| Principle | What it means | Why it matters |
+|-----------|---------------|----------------|
+| **Visual Hierarchy** | Thumbnail (primary) → Title (secondary) → Meta (tertiary) | Guides user's eye naturally |
+| **Contrast over Color** | Subtle contrast steps, not harsh whites | Prevents eye strain in dark mode |
+| **Neutral Container, Bright Content** | Card background neutral; thumbnails carry visual "pop" | Keeps feed consistent and scannable |
+| **Density Balance** | Thumbnail ≈ 80% of card height; text ≈ 20% | Feels clean and professional |
+| **Micro-typography** | Each text layer has distinct font weight, opacity, spacing | Enhances legibility and hierarchy |
+
+**Key Measurements:**
+- Card width: 320-360px (sweet spot for 4-5 per row on desktop)
+- Thumbnail: 100% width, 16:9 aspect ratio, rounded corners 0.75rem
+- Text area: 60-70px height, padding 1rem
+- Hover: Subtle lift (-3px translateY) + soft shadow
+
+**Typography Hierarchy** (Researched from actual YouTube):
+- **Title**: 14px (0.875rem), weight 500, color white `#ffffff`, max 2 lines, leading-tight
+- **Creator**: 12px (0.75rem), weight 400 (normal), color `rgb(96,96,96)` light / `#aaaaaa` dark
+- **Meta**: 12px (0.75rem), weight 400 (normal), same gray as creator, dot separators (•)
+
+**Philosophy Recap:**
+- **Depth**: Subtle elevation and shadow, not contrast explosions
+- **Rhythm**: Consistent padding (1rem inner, 1.5rem outer)
+- **Information balance**: Maximum 3 visual hierarchies per card
+
 ## Color Palette - Cinema Bold
 
-### Primary Colors
+### HSL-Based Color System
 
-**Deep Crimson** - `#DC2626`
+All colors use HSL (Hue, Saturation, Lightness) format for dynamic theming capabilities. The system allows for easy theme variations by adjusting hue values programmatically.
+
+### Primary Brand Colors
+
+**Deep Crimson** - `hsl(0, 72%, 51%)` / `#DC2626`
 - Primary brand color
 - Use for: Primary buttons, links, active states, brand elements
 - Represents: Passion, cinema, prestige
 - Accessibility: Ensure sufficient contrast on dark backgrounds
 
-**Warm Amber** - `#F59E0B`
-- Accent color
+**Warm Amber** - `hsl(38, 92%, 50%)` / `#F59E0B`
+- Secondary brand color
 - Use for: Secondary actions, highlights, ratings stars, success states
 - Represents: Quality, awards, excellence
 - Pairs beautifully with crimson
 
-### Background Colors
+### Gradient System
 
-**Very Dark Blue-Grey** - `#0F172A`
-- Main background color
+**Crimson Gradient** - `.text-gradient-crimson`
+```css
+background: linear-gradient(135deg, #b91c1c 0%, #DC2626 50%, #ef4444 100%);
+```
+- Dark red → Crimson → Bright red
+- 135° angle for consistent flow
+
+**Amber Gradient** - `.text-gradient-amber`
+```css
+background: linear-gradient(135deg, #d97706 0%, #F59E0B 50%, #fbbf24 100%);
+```
+- Dark amber → Amber → Light amber
+- Warm, golden feel
+
+**Cinema Gradient** - `.text-gradient-cinema` ✨
+```css
+background: linear-gradient(135deg, #d4a017 0%, #ffe63a 50%, #f7b731 100%);
+```
+- Bronze gold → Bright yellow → Honey gold
+- Premium, luxurious spectrum
+- Use for: Logo, hero headings, brand moments
+
+### Background Colors (Dark Theme)
+
+**Deep Slate Navy** - `hsl(215, 29%, 8%)` / `#0E141B`
+- Main background color (`--background`)
 - Use for: Page backgrounds, empty areas
 - Creates depth and sophistication
+- Note: YouTube uses `#181818`, we use slightly darker for more drama
 
-**Dark Slate** - `#1E293B`
-- Surface color
+**Gentle Card Surface** - `hsl(217, 24%, 14%)` / `#1B2533`
+- Surface color (`--card`, `--muted`)
 - Use for: Cards, modals, elevated surfaces
-- One step lighter than main background
+- Gentle contrast from background
+- Note: YouTube uses `#212121`, ours is similar lightness
 
-**Deep Slate** - `#334155`
-- Borders and dividers
+**Clean Borders** - `hsl(215, 20%, 22%)` / `#2A3443`
+- Border color (`--border`, `--input`)
 - Use for: Card borders, separators, subtle divisions
-- Should be subtle, not prominent
+- Thin, clean lines
+
+**Professional Blue** - `hsl(217, 91%, 60%)` / `#3B82F6`
+- Accent color (`--accent`)
+- Use for: Interactive elements, hover states
+- Professional yet energetic
 
 ### Text Colors
 
-**Off-White** - `#F8FAFC`
-- Primary text color
-- Use for: Headings, important text, body copy
-- High contrast on dark backgrounds
+**Primary Text** - `hsl(240, 5%, 98%)` / `#F9FAFB` or `#FFFFFF`
+- Primary text color (`--foreground`)
+- Use for: Video titles, headings, important text
+- Calm, high readability
+- Note: YouTube uses pure white `#ffffff` for titles
 
-**Slate Grey** - `#94A3B8`
-- Secondary text color
-- Use for: Metadata, timestamps, less important information
-- Maintains readability while being visually secondary
-
-**Medium Slate** - `#64748B`
-- Tertiary text / placeholder
-- Use for: Disabled text, placeholders, very subtle information
+**Secondary Text (YouTube-Researched)** - `rgb(96, 96, 96)` light / `#aaaaaa` dark
+- Secondary text color for metadata
+- Use for: Channel names, view counts, dates, timestamps
+- Significantly muted from primary text (YouTube spec)
+- Falls back to our `--muted-foreground` (`#94A3B8`) which is similar
+- **Key**: This creates strong visual hierarchy vs white titles
 
 ### Semantic Colors
 
@@ -66,17 +128,53 @@ SupaViewer's design should feel like a prestigious film festival website meets m
 - Use for: Success messages, approved status
 - Keep usage minimal
 
-**Warning Amber** - `#F59E0B` (same as accent)
+**Warning Amber** - `hsl(38, 92%, 50%)` (same as brand amber)
 - Use for: Warnings, pending status
-- Dual purpose with accent color
+- Dual purpose with brand color
 
-**Error Red** - `#EF4444`
+**Destructive** - `hsl(0, 63%, 31%)`
 - Use for: Errors, rejected status, destructive actions
-- Similar hue to crimson but brighter
+- Darker, more muted than primary crimson
 
-**Info Blue** - `#3B82F6`
-- Use for: Info messages, tips
-- Use sparingly
+**Professional Blue** - `hsl(217, 91%, 60%)` / `#3B82F6`
+- Use for: Info messages, accent interactions
+- Professional tech feel
+
+### Theme Customization
+
+The HSL-based system enables future theme variations:
+
+**Current Theme: Cinema Bold (Deep Navy)**
+- Base hue: 215° (cool slate)
+- Creates professional, calm atmosphere
+- Warm gradients provide contrast
+
+**Potential Variations** (Future):
+- **Warm Sunset**: Shift hue to 25° (warm browns)
+- **Forest Night**: Shift hue to 160° (deep teals)
+- **Royal Twilight**: Shift hue to 270° (deep purples)
+
+Simply adjust the hue value in CSS variables to create new themes while maintaining contrast ratios and design consistency.
+
+### Contrast Ratios & Color Layering
+
+Following YouTube's "relative contrast" methodology, our dark theme uses subtle lightness differences rather than absolute brightness:
+
+| Layer | HSL Lightness | Hex Value | Purpose |
+|-------|---------------|-----------|---------|
+| **Background** | 8% | #0E141B | True dark foundation (cinematic tone) |
+| **Card** | 14% | #1B2533 | Visible depth separation |
+| **Border** | 22% | #2A3443 | Edge definition |
+| **Text Primary** | 98% | #F9FAFB | Headlines (never full white #FFF) |
+| **Text Secondary** | 65% | #94A3B8 | Creator names, labels |
+| **Text Muted** | 40% | (varies) | Metadata, timestamps |
+| **Accent** | 45-60% | #3B82F6 | Interactive hover highlights |
+
+**Key Principles:**
+- Ideal contrast ratio for dark UI readability: **12:1** between primary text and background
+- Never use full white (`#FFFFFF`) — aim for `hsl(210, 40%, 96%)`
+- Maintain 6-8% lightness steps between adjacent layers for subtle depth
+- Text hierarchy uses opacity variations (`/80`, `/60`, `/40`) for tertiary elements
 
 ## Typography
 
@@ -158,17 +256,33 @@ Use Tailwind's spacing scale (4px base unit).
 
 ### Cards
 
-**Video Cards**:
-- Background: Dark Slate (#1E293B)
-- Border: 1px solid Deep Slate (#334155)
+**Video Cards** (YouTube-Inspired):
+- Background: `bg-card` (#1B2533) - Neutral container
+- Border: None (clean, borderless like YouTube)
 - Border radius: 12px (rounded-xl)
-- Padding: 0 (image full bleed), 16px for text content
-- Hover: Subtle lift (transform: translateY(-4px)), border becomes crimson
-- Transition: 200ms ease
+- Padding: 0 for thumbnail (full bleed), 16px (p-4) for text content
+- Hover effects:
+  - Subtle lift: `translateY(-3px)` (not -4px, gentler)
+  - Shadow: `0 8px 20px hsl(var(--border) / 0.15)` (soft, diffused)
+  - Thumbnail zoom: `scale(1.03)` (subtle, not jarring)
+  - Gradient overlay: `opacity-0` to `opacity-100` on hover
+- Transition: 250ms ease (smooth, not too fast)
+- Thumbnail: 80% of card visual weight, 16:9 aspect ratio
+- Text area: 20% of card, maximum 3 hierarchies
+
+**YouTube-Style Micro-Details** (Accurate Specs):
+- Duration overlay: `bg-black/60` bottom-right, `backdrop-blur-sm`
+- Featured badge: Top-right, `bg-amber` with `text-background`
+- Gradient overlay on hover: `from-black/30 via-transparent to-transparent`
+- Title: 2-line clamp, `14px` (0.875rem), weight 500, white, hover to primary color
+- Creator: `12px` (0.75rem), weight 400, `#606060` (light) / `#aaa` (dark)
+- Meta: `12px` (0.75rem), weight 400, same gray, dot separators with minimal gap
+- Padding: Reduced to `12px` (p-3) to match YouTube's compact spacing
+- Line height: `20px` (leading-5) for title, normal for metadata
 
 **Content Cards**:
-- Background: Dark Slate (#1E293B)
-- Border: 1px solid Deep Slate (#334155)
+- Background: `bg-card` (#1B2533)
+- Border: 1px solid `border-border` (#2A3443)
 - Border radius: 8px (rounded-lg)
 - Padding: 24px (p-6)
 - Shadow: Subtle (shadow-sm)
@@ -176,8 +290,8 @@ Use Tailwind's spacing scale (4px base unit).
 ### Buttons
 
 **Primary Button** (Crimson):
-- Background: Deep Crimson (#DC2626)
-- Text: Off-White (#F8FAFC)
+- Background: `bg-primary` (#DC2626)
+- Text: `text-primary-foreground` (#F9FAFB)
 - Padding: 12px 24px (px-6 py-3)
 - Border radius: 8px (rounded-lg)
 - Hover: Slightly lighter, subtle shadow
@@ -185,16 +299,16 @@ Use Tailwind's spacing scale (4px base unit).
 - Font weight: 600 (SemiBold)
 
 **Secondary Button** (Amber):
-- Background: Warm Amber (#F59E0B)
-- Text: Very Dark Blue-Grey (#0F172A)
+- Background: `bg-secondary` (#F59E0B)
+- Text: `text-secondary-foreground` (dark)
 - Same padding and radius as primary
 - Hover: Slightly lighter
 
 **Ghost Button**:
 - Background: Transparent
-- Border: 1px solid Deep Slate (#334155)
-- Text: Off-White (#F8FAFC)
-- Hover: Background becomes Dark Slate
+- Border: 1px solid `border-border` (#2A3443)
+- Text: `text-foreground` (#F9FAFB)
+- Hover: Background becomes `bg-accent` (#3B82F6)
 
 **Icon Button**:
 - Square, 40px × 40px
@@ -204,13 +318,13 @@ Use Tailwind's spacing scale (4px base unit).
 ### Inputs & Forms
 
 **Text Input**:
-- Background: Very Dark Blue-Grey (#0F172A)
-- Border: 1px solid Deep Slate (#334155)
-- Focus: Border becomes Crimson (#DC2626), subtle shadow
+- Background: `bg-background` (#0E141B)
+- Border: 1px solid `border-input` (#2A3443)
+- Focus: Border becomes `border-primary` (#DC2626), subtle shadow
 - Padding: 12px (p-3)
 - Border radius: 8px (rounded-lg)
-- Text: Off-White (#F8FAFC)
-- Placeholder: Medium Slate (#64748B)
+- Text: `text-foreground` (#F9FAFB)
+- Placeholder: `text-muted-foreground` (#94A3B8)
 
 **Textarea**:
 - Same as text input
@@ -219,7 +333,7 @@ Use Tailwind's spacing scale (4px base unit).
 
 **Select / Dropdown**:
 - Same styling as text input
-- Icon: Chevron down in Slate Grey
+- Icon: Chevron down in `text-muted-foreground`
 
 **Checkbox / Radio**:
 - Custom styled with Crimson accent
@@ -228,8 +342,8 @@ Use Tailwind's spacing scale (4px base unit).
 
 ### Rating Stars
 
-- Empty: Slate Grey (#94A3B8)
-- Filled: Warm Amber (#F59E0B)
+- Empty: `text-muted-foreground` (#94A3B8)
+- Filled: `text-secondary` (#F59E0B - Amber)
 - Size: 20px (w-5 h-5)
 - Hover state: Slightly larger (scale: 1.1)
 - Interactive: Smooth transition
@@ -237,16 +351,16 @@ Use Tailwind's spacing scale (4px base unit).
 ### Badges / Tags
 
 **AI Tool Badge**:
-- Background: Dark Slate (#1E293B)
-- Border: 1px solid Deep Slate (#334155)
-- Text: Slate Grey (#94A3B8)
+- Background: `bg-card` (#1B2533)
+- Border: 1px solid `border-border` (#2A3443)
+- Text: `text-muted-foreground` (#94A3B8)
 - Padding: 4px 12px (px-3 py-1)
 - Border radius: 6px (rounded-md)
 - Font size: 14px (text-sm)
 
 **Featured Badge**:
-- Background: Crimson (#DC2626)
-- Text: Off-White (#F8FAFC)
+- Background: `bg-primary` (#DC2626)
+- Text: `text-primary-foreground` (#F9FAFB)
 - Same padding and radius
 
 **Status Badge**:
@@ -258,22 +372,22 @@ Use Tailwind's spacing scale (4px base unit).
 ### Navigation
 
 **Top Nav**:
-- Background: Dark Slate (#1E293B) with slight transparency
-- Height: 64px
-- Backdrop blur: 8px
+- Background: `.glass` - `rgba(20, 25, 33, 0.7)` with backdrop blur
+- Height: 64px (h-16)
+- Backdrop blur: 12px
 - Sticky: Yes
-- Border bottom: 1px solid Deep Slate
+- Border bottom: 1px solid `border-border` (#2A3443)
 
 **Nav Links**:
-- Text: Slate Grey (#94A3B8)
-- Active: Crimson (#DC2626)
-- Hover: Off-White (#F8FAFC)
+- Text: `text-muted-foreground` (#94A3B8)
+- Active: `text-primary` (#DC2626)
+- Hover: `text-foreground` (#F9FAFB)
 - Font weight: 600 (SemiBold)
 
 ### Modals / Dialogs
 
-- Background: Dark Slate (#1E293B)
-- Border: 1px solid Deep Slate (#334155)
+- Background: `bg-card` (#1B2533)
+- Border: 1px solid `border-border` (#2A3443)
 - Border radius: 12px (rounded-xl)
 - Backdrop: Black with 50% opacity
 - Max width: 500px (forms) or 800px (video preview)
@@ -369,9 +483,9 @@ Use Lucide React icons throughout.
 - XL: 32px (w-8 h-8)
 
 **Icon Colors**:
-- Default: Slate Grey (#94A3B8)
-- Active: Crimson (#DC2626)
-- Hover: Off-White (#F8FAFC)
+- Default: `text-muted-foreground` (#94A3B8)
+- Active: `text-primary` (#DC2626)
+- Hover: `text-foreground` (#F9FAFB)
 
 ## Accessibility
 
@@ -433,15 +547,23 @@ Follow Tailwind defaults:
 - Modals: 4px blur
 - Creates depth
 
-## Don't Use
+## Design Guidelines: What to Avoid
 
-- Purple/violet AI gradients
-- Neon colors
+- Purple/violet gradients or blue/violet tones (avoid cool spectrum)
+- Neon or overly bright colors
+- Light whitish colors in gradients
 - Comic Sans or playful fonts
-- Busy patterns
-- Too many shadows
+- Busy patterns or textures
+- Too many shadows or depth effects
 - Excessive animations
 - Anything that looks "generic SaaS"
+- Rainbow-like multi-color gradients
+
+**Stay Close to:**
+- Warm color palette (reds, oranges, ambers, golds)
+- Cinema Bold identity with crimson and amber
+- Professional, premium aesthetic
+- Deep, rich backgrounds (navy, slate tones)
 
 ## Design Inspiration References
 
