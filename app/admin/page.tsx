@@ -317,8 +317,8 @@ export default async function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Approval Rate</span>
                 <span className="text-sm font-semibold text-foreground">
-                  {totalVideos > 0
-                    ? Math.round(((approvedCount || 0) / totalVideos) * 100)
+                  {(totalVideos || 0) > 0
+                    ? Math.round(((approvedCount || 0) / (totalVideos || 1)) * 100)
                     : 0}
                   %
                 </span>
