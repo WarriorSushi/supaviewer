@@ -4,14 +4,37 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Search, Upload } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { VideoFilters } from "@/components/filters/video-filters";
+import { AuthModal } from "@/components/auth/auth-modal";
+import { UserMenu } from "@/components/auth/user-menu";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 export function Navbar() {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const supabase = createClient();
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,10 +105,14 @@ export function Navbar() {
               </Link>
             </Button>
 
-            {/* Single Sign In Button */}
-            <Button size="sm" variant="outline" asChild>
-              <Link href="/auth">Sign In</Link>
-            </Button>
+            {/* Auth: Show User Menu or Sign In Button */}
+            {user ? (
+              <UserMenu user={user} />
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => setAuthModalOpen(true)}>
+                Sign In
+              </Button>
+            )}
           </div>
 
           {/* Mobile Actions */}
@@ -129,13 +156,24 @@ export function Navbar() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-4 border-t border-border max-h-[calc(100vh-4rem)] overflow-y-auto">
-            {/* Sign In Button - Above Filters */}
+            {/* Auth Button - Above Filters */}
             <div className="px-4">
-              <Button variant="outline" className="w-full" asChild>
-                <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
+              {user ? (
+                <div className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
+                  <UserMenu user={user} />
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setAuthModalOpen(true);
+                    setMobileMenuOpen(false);
+                  }}
+                >
                   Sign In
-                </Link>
-              </Button>
+                </Button>
+              )}
             </div>
 
             {/* Filters */}
@@ -155,6 +193,9 @@ export function Navbar() {
           </div>
         )}
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </nav>
   );
 }

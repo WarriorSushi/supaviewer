@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SupaViewer
 
-## Getting Started
+> A curated platform for discovering, rating, and submitting AI-generated videos
 
-First, run the development server:
+[![Next.js](https://img.shields.io/badge/Next.js-15.5.6-black)](https://nextjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Latest-green)](https://supabase.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-blue)](https://tailwindcss.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🎬 Overview
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+SupaViewer is a modern web application for exploring and discovering AI-generated videos from platforms like Sora, Runway, Pika, and more. Users can browse videos, rate their favorites, submit new content, and admins can manage submissions through a comprehensive dashboard.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Key Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- 🎥 **Video Discovery** - Browse AI-generated videos with advanced filtering
+- ⭐ **Rating System** - 5-star rating system with 0.5 increments
+- 👤 **Creator Profiles** - Dedicated pages for video creators
+- 📤 **Video Submission** - Public submission form for new content
+- 🔐 **Authentication** - Email/password and Google OAuth
+- 🛡️ **Admin Panel** - Comprehensive management dashboard
 
-## Learn More
+## 🚀 Quick Start
 
-To learn more about Next.js, take a look at the following resources:
+### Prerequisites
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Node.js 18+ installed
+- pnpm package manager
+- Supabase account
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Installation
 
-## Deploy on Vercel
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/supaviewer.git
+   cd supaviewer
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. **Install dependencies**
+   ```bash
+   pnpm install
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3. **Set up environment variables**
+   Create `.env.local` with your Supabase credentials:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   ```
+
+4. **Run database migrations**
+   See `DATABASE_SCHEMA.md` for complete schema and setup instructions.
+
+5. **Start development server**
+   ```bash
+   pnpm dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000)
+
+## 📚 Documentation
+
+- `USER_FLOWS.md` - User journey documentation
+- `FEATURES.md` - Feature specifications
+- `DESIGN_SYSTEM.md` - Design guidelines  
+- `ADMIN_DASHBOARD.md` - Admin panel documentation
+- `VERIFICATION_CHECKLIST.md` - Testing checklist
+- `FINAL_SUMMARY.md` - Complete implementation summary
+
+## 🛠️ Tech Stack
+
+- **Next.js 15.5.6** - React framework
+- **Supabase** - Database & Auth
+- **Tailwind CSS v4** - Styling
+- **shadcn/ui** - Components
+- **TypeScript** - Type safety
+
+## 📄 License
+
+All rights reserved.
+
+---
+
+Built with ❤️ using Next.js and Supabase

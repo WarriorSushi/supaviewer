@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Rating, RatingButton } from '@/components/ui/shadcn-io/rating'
 import { Button } from '@/components/ui/button'
 import { Share2, X, LogIn } from 'lucide-react'
@@ -180,20 +180,137 @@ export function VideoRatingDisplay({ avgRating, totalRatings }: VideoRatingDispl
 // Interactive component for rating above creator section
 export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps) {
   const [userRating, setUserRating] = useState(0)
+  const [existingRatingId, setExistingRatingId] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [user, setUser] = useState<any>(null)
 
-  const handleRatingChange = (rating: number) => {
-    // Store rating temporarily in localStorage
-    const tempRatings = JSON.parse(localStorage.getItem('temp_ratings') || '{}')
-    tempRatings[videoId] = {
-      rating,
-      timestamp: new Date().toISOString()
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setIsAuthenticated(!!user)
+
+      if (user) {
+        // Fetch existing rating
+        const { data: existingRating } = await supabase
+          .from('ratings')
+          .select('id, rating')
+          .eq('video_id', videoId)
+          .eq('user_id', user.id)
+          .single()
+
+        if (existingRating) {
+          setUserRating(existingRating.rating)
+          setExistingRatingId(existingRating.id)
+        }
+      } else {
+        // Load from localStorage for non-authenticated users
+        const tempRatings = JSON.parse(localStorage.getItem('temp_ratings') || '{}')
+        if (tempRatings[videoId]) {
+          setUserRating(tempRatings[videoId].rating)
+        }
+      }
     }
-    localStorage.setItem('temp_ratings', JSON.stringify(tempRatings))
 
+    checkAuth()
+  }, [videoId])
+
+  const handleRatingChange = async (rating: number) => {
     setUserRating(rating)
-    setShowAuthPrompt(true)
-    toast.success(`You rated this ${rating} stars!`)
+
+    if (!isAuthenticated) {
+      // Store rating temporarily in localStorage
+      const tempRatings = JSON.parse(localStorage.getItem('temp_ratings') || '{}')
+      tempRatings[videoId] = {
+        rating,
+        timestamp: new Date().toISOString()
+      }
+      localStorage.setItem('temp_ratings', JSON.stringify(tempRatings))
+
+      setShowAuthPrompt(true)
+      toast.success(`You rated this ${rating} stars! Sign in to save it.`)
+      return
+    }
+
+    // Authenticated user - save to database
+    setIsLoading(true)
+
+    try {
+      if (existingRatingId) {
+        // Update existing rating
+        const response = await fetch(`/api/ratings/${existingRatingId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ rating }),
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to update rating')
+        }
+
+        toast.success(`Rating updated to ${rating} stars!`)
+      } else {
+        // Create new rating
+        const response = await fetch('/api/ratings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ video_id: videoId, rating }),
+        })
+
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to create rating')
+        }
+
+        setExistingRatingId(result.rating.id)
+        toast.success(`You rated this ${rating} stars!`)
+      }
+
+      // Reload page to update average rating
+      window.location.reload()
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred')
+      setUserRating(existingRatingId ? userRating : 0) // Revert on error
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDeleteRating = async () => {
+    if (!existingRatingId) return
+
+    setIsLoading(true)
+
+    try {
+      const response = await fetch(`/api/ratings/${existingRatingId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete rating')
+      }
+
+      setUserRating(0)
+      setExistingRatingId(null)
+      toast.success('Rating removed')
+
+      // Reload page to update average rating
+      window.location.reload()
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleSignIn = () => {
@@ -211,6 +328,7 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
               value={userRating}
               onValueChange={handleRatingChange}
               className="gap-1"
+              disabled={isLoading}
             >
               {Array.from({ length: 5 }).map((_, index) => (
                 <RatingButton
@@ -224,14 +342,25 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
         </div>
 
         {userRating > 0 && (
-          <p className="text-xs text-muted-foreground text-center mt-2">
-            You rated {userRating} stars
-          </p>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-muted-foreground">
+              You rated {userRating} stars
+            </p>
+            {isAuthenticated && existingRatingId && (
+              <button
+                onClick={handleDeleteRating}
+                disabled={isLoading}
+                className="text-xs text-destructive hover:underline"
+              >
+                Remove rating
+              </button>
+            )}
+          </div>
         )}
       </div>
 
-      {/* Auth Prompt Banner */}
-      {showAuthPrompt && userRating > 0 && (
+      {/* Auth Prompt Banner - Only for non-authenticated users */}
+      {!isAuthenticated && showAuthPrompt && userRating > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 duration-300">
           <div className="bg-card border-2 border-primary rounded-xl p-5 shadow-2xl max-w-sm mx-4 relative">
             <button
@@ -251,7 +380,7 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
                   Save your rating
                 </h4>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Sign in to save your <span className="font-semibold text-secondary">{userRating}-star</span> rating
+                  Sign in to save your <span className="font-semibold text-secondary">{userRating}-star</span> rating and unlock other features
                 </p>
 
                 <div className="flex gap-2">

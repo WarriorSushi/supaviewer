@@ -13,8 +13,51 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "SupaViewer - Discover AI-Generated Films",
-  description: "Curated platform for discovering and rating the best AI-generated video content",
+  title: {
+    default: 'SupaViewer - Discover AI-Generated Videos',
+    template: '%s | SupaViewer',
+  },
+  description:
+    'Explore and discover the best AI-generated videos from Sora, Runway, Pika, and more. Rate, share, and submit your own creations.',
+  keywords: [
+    'AI videos',
+    'AI-generated',
+    'Sora',
+    'Runway',
+    'Pika',
+    'video discovery',
+    'AI art',
+    'generative AI',
+  ],
+  authors: [{ name: 'SupaViewer' }],
+  creator: 'SupaViewer',
+  publisher: 'SupaViewer',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://supaviewer.com',
+    title: 'SupaViewer - Discover AI-Generated Videos',
+    description:
+      'Explore and discover the best AI-generated videos from Sora, Runway, Pika, and more.',
+    siteName: 'SupaViewer',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SupaViewer - Discover AI-Generated Videos',
+    description:
+      'Explore and discover the best AI-generated videos from Sora, Runway, Pika, and more.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export default function RootLayout({
