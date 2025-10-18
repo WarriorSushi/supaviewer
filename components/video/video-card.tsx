@@ -21,10 +21,10 @@ export function VideoCard({ video, priority = false, featured = false }: VideoCa
   return (
     <Link href={`/video/${video.id}`} className="group block">
       {/* YouTube-inspired card: Neutral container, bright content */}
-      <div className="bg-card rounded-none md:rounded-xl overflow-hidden transition-all duration-250 hover:-translate-y-1 hover:shadow-[0_8px_20px_hsl(var(--border)/0.15)]">
+      <div className="bg-card border border-border rounded-none md:rounded-xl overflow-hidden transition-all duration-250 hover:-translate-y-1 hover:shadow-[0_8px_20px_hsl(var(--border)/0.15)]">
 
         {/* Thumbnail - 80% of card visual weight */}
-        <div className="relative aspect-video overflow-hidden bg-background rounded-t-none md:rounded-t-xl">
+        <div className="relative aspect-video overflow-hidden bg-card rounded-t-none md:rounded-t-xl">
           {imageError ? (
             // Fallback placeholder
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-crimson/20 to-amber/20">
@@ -59,7 +59,7 @@ export function VideoCard({ video, priority = false, featured = false }: VideoCa
         </div>
 
         {/* Text Area - 20% of card, maximum 3 visual hierarchies */}
-        <div className="p-3 space-y-1">
+        <div className="p-3 space-y-1 bg-card">
 
           {/* PRIMARY: Video Title - YouTube spec: 14px, white, weight 500 */}
           <h3 className="text-[0.875rem] font-medium leading-5 line-clamp-2 text-foreground group-hover:text-primary transition-colors duration-200">

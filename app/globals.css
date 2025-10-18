@@ -1,84 +1,30 @@
 @import "tailwindcss";
 
+/* Tailwind v4 Theme Configuration */
+@theme {
+  --color-background: hsl(215 25% 8%);
+  --color-foreground: hsl(240 5% 98%);
+  --color-card: hsl(215 25% 12%);
+  --color-card-foreground: hsl(240 5% 98%);
+  --color-primary: hsl(0 72% 51%);
+  --color-primary-foreground: hsl(0 0% 98%);
+  --color-secondary: hsl(38 92% 50%);
+  --color-secondary-foreground: hsl(0 0% 9%);
+  --color-muted: hsl(215 25% 12%);
+  --color-muted-foreground: hsl(215 16% 65%);
+  --color-accent: hsl(217 91% 60%);
+  --color-accent-foreground: hsl(0 0% 98%);
+  --color-destructive: hsl(0 63% 31%);
+  --color-destructive-foreground: hsl(210 40% 98%);
+  --color-border: hsl(215 25% 22%);
+  --color-input: hsl(215 25% 22%);
+  --color-ring: hsl(0 72% 51%);
+}
+
 /* Cinema Bold Design System - Base Layer */
 @layer base {
+  /* Layout variable */
   :root {
-    /* Light mode - HSL System (fallback, not primary focus) */
-
-    /* Base layers */
-    --background: 0 0% 100%;         /* White background */
-    --foreground: 222 47% 11%;       /* Dark text */
-
-    /* Surface layers */
-    --card: 0 0% 100%;               /* White cards */
-    --card-foreground: 222 47% 11%;  /* Dark text on cards */
-    --muted: 210 40% 96%;            /* Light gray muted */
-    --muted-foreground: 215 16% 47%; /* Medium gray text */
-
-    /* Brand colors - Warm palette */
-    --primary: 0 72% 51%;            /* Crimson */
-    --primary-foreground: 0 0% 98%;  /* Light text on primary */
-    --secondary: 38 92% 50%;         /* Amber */
-    --secondary-foreground: 0 0% 9%; /* Dark text on secondary */
-
-    /* Accent */
-    --accent: 217 91% 60%;           /* Blue accent */
-    --accent-foreground: 0 0% 98%;   /* Light text on accent */
-
-    /* Semantic colors */
-    --destructive: 0 72% 51%;        /* Destructive red */
-    --destructive-foreground: 0 0% 98%;
-
-    /* Interactive elements */
-    --border: 214 32% 91%;           /* Light borders */
-    --input: 214 32% 91%;            /* Light input backgrounds */
-    --ring: 0 72% 51%;               /* Crimson focus ring */
-
-    /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    /* Layout */
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    /* Dark mode - Primary theme (Cinema Bold) - Full HSL System */
-
-    /* Base layers - Deep slate navy palette */
-    --background: 215 25% 8%;        /* #0E141B - Deepest layer */
-    --foreground: 240 5% 98%;        /* #F9FAFB - Primary text */
-
-    /* Surface layers */
-    --card: 215 25% 14%;             /* #1B2533 - Cards, panels */
-    --card-foreground: 240 5% 98%;   /* Text on cards */
-    --muted: 215 25% 14%;            /* Same as card for consistency */
-    --muted-foreground: 215 16% 65%; /* #94A3B8 - Secondary text */
-
-    /* Brand colors - Warm palette */
-    --primary: 0 72% 51%;            /* #DC2626 - Crimson */
-    --primary-foreground: 0 0% 98%;  /* Text on primary */
-    --secondary: 38 92% 50%;         /* #F59E0B - Amber */
-    --secondary-foreground: 0 0% 9%; /* Text on secondary */
-
-    /* Accent - Professional blue */
-    --accent: 217 91% 60%;           /* #3B82F6 - Interactive elements */
-    --accent-foreground: 0 0% 98%;   /* Text on accent */
-
-    /* Semantic colors */
-    --destructive: 0 63% 31%;        /* Destructive actions */
-    --destructive-foreground: 210 40% 98%;
-
-    /* Interactive elements */
-    --border: 215 25% 22%;           /* #2A3443 - Borders, dividers */
-    --input: 215 25% 22%;            /* Input backgrounds */
-    --ring: 0 72% 51%;               /* Focus rings - Crimson */
-
-    /* Popover */
-    --popover: 215 25% 14%;
-    --popover-foreground: 240 5% 98%;
-
-    /* Layout */
     --radius: 0.5rem;
   }
 }

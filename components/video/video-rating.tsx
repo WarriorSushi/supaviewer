@@ -57,7 +57,7 @@ export function VideoRating({ avgRating, totalRatings, videoId }: VideoRatingPro
       <div className="bg-card border border-border rounded-lg p-4">
         <div className="flex items-center justify-between gap-4">
           {/* Average Rating Display */}
-          <div className="flex items-center gap-2" style={{ color: 'hsl(38, 92%, 50%)' }}>
+          <div className="flex items-center gap-2 text-secondary">
             <Rating value={readOnlyValue} readOnly className="gap-0.5">
               {Array.from({ length: 5 }).map((_, index) => (
                 <RatingButton
@@ -73,7 +73,7 @@ export function VideoRating({ avgRating, totalRatings, videoId }: VideoRatingPro
           </div>
 
           {/* Interactive Rating */}
-          <div className="flex items-center gap-2" style={{ color: 'hsl(38, 92%, 50%)' }}>
+          <div className="flex items-center gap-2 text-secondary">
             <Rating
               value={userRating}
               onValueChange={handleRatingChange}
@@ -129,7 +129,7 @@ export function VideoRating({ avgRating, totalRatings, videoId }: VideoRatingPro
                   Save your rating
                 </h4>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Sign in to save your <span className="font-semibold" style={{ color: 'hsl(38, 92%, 50%)' }}>{userRating}-star</span> rating
+                  Sign in to save your <span className="font-semibold text-secondary">{userRating}-star</span> rating
                 </p>
 
                 <div className="flex gap-2">
@@ -163,7 +163,7 @@ export function VideoRatingDisplay({ avgRating, totalRatings }: VideoRatingDispl
   const readOnlyValue = avgRating ? Math.round(avgRating) : 0
 
   return (
-    <div className="flex items-center gap-2" style={{ color: 'hsl(38, 92%, 50%)' }}>
+    <div className="flex items-center gap-2 text-secondary">
       <Rating value={readOnlyValue} readOnly className="gap-0.5">
         {Array.from({ length: 5 }).map((_, index) => (
           <RatingButton key={index} size={18} />
@@ -202,11 +202,11 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
 
   return (
     <>
-      <div className="rounded-lg p-4" style={{ backgroundColor: 'hsl(215, 25%, 12%)', border: '1px solid hsl(215, 25%, 22%)' }}>
+      <div className="rounded-lg p-4 bg-card border border-border">
         <div className="flex items-center justify-between gap-4">
           <span className="text-sm font-semibold text-foreground">Rate this video</span>
 
-          <div className="flex items-center gap-2" style={{ color: 'hsl(38, 92%, 50%)' }}>
+          <div className="flex items-center gap-2 text-secondary">
             <Rating
               value={userRating}
               onValueChange={handleRatingChange}
@@ -251,7 +251,7 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
                   Save your rating
                 </h4>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Sign in to save your <span className="font-semibold" style={{ color: 'hsl(38, 92%, 50%)' }}>{userRating}-star</span> rating
+                  Sign in to save your <span className="font-semibold text-secondary">{userRating}-star</span> rating
                 </p>
 
                 <div className="flex gap-2">

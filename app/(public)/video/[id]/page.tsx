@@ -154,7 +154,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
             {/* Creator & Description on Mobile */}
             <div className="lg:hidden">
               {/* Creator Info Card */}
-              <div className="rounded-xl p-6" style={{ backgroundColor: 'hsl(215, 25%, 12%)', border: '1px solid hsl(215, 25%, 22%)' }}>
+              <div className="rounded-xl p-6 bg-card border border-border">
                 <div className="space-y-4">
                   <div className="flex items-start gap-4">
                     <Link href={`/creator/${videoData.creator.slug}`}>
@@ -201,7 +201,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
           {/* Right Sidebar - Creator & Description (Desktop Only) */}
           <div className="hidden lg:block lg:col-span-1 space-y-6">
             {/* Creator Info Card */}
-            <div className="rounded-xl p-6 sticky top-24" style={{ backgroundColor: 'hsl(215, 25%, 12%)', border: '1px solid hsl(215, 25%, 22%)' }}>
+            <div className="rounded-xl p-6 sticky top-24 bg-card border border-border">
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
                   <Link href={`/creator/${videoData.creator.slug}`}>
