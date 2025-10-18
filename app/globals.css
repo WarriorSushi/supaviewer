@@ -1,31 +1,49 @@
 @import "tailwindcss";
 
-/* Tailwind v4 Theme Configuration */
-@theme {
-  --color-background: hsl(215 25% 8%);
-  --color-foreground: hsl(240 5% 98%);
-  --color-card: hsl(215 25% 12%);
-  --color-card-foreground: hsl(240 5% 98%);
-  --color-primary: hsl(0 72% 51%);
-  --color-primary-foreground: hsl(0 0% 98%);
-  --color-secondary: hsl(38 92% 50%);
-  --color-secondary-foreground: hsl(0 0% 9%);
-  --color-muted: hsl(215 25% 12%);
-  --color-muted-foreground: hsl(215 16% 65%);
-  --color-accent: hsl(217 91% 60%);
-  --color-accent-foreground: hsl(0 0% 98%);
-  --color-destructive: hsl(0 63% 31%);
-  --color-destructive-foreground: hsl(210 40% 98%);
-  --color-border: hsl(215 25% 22%);
-  --color-input: hsl(215 25% 22%);
-  --color-ring: hsl(0 72% 51%);
-}
-
 /* Cinema Bold Design System - Base Layer */
 @layer base {
-  /* Layout variable */
   :root {
     --radius: 0.5rem;
+
+    /* Light mode - fallback */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --primary: 0 72% 51%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 38 92% 50%;
+    --secondary-foreground: 0 0% 9%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 0 72% 51%;
+  }
+
+  .dark {
+    /* Dark mode - Cinema Bold */
+    --background: 215 25% 8%;
+    --foreground: 240 5% 98%;
+    --card: 215 25% 12%;
+    --card-foreground: 240 5% 98%;
+    --muted: 215 25% 12%;
+    --muted-foreground: 215 16% 65%;
+    --primary: 0 72% 51%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 38 92% 50%;
+    --secondary-foreground: 0 0% 9%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 215 25% 22%;
+    --input: 215 25% 22%;
+    --ring: 0 72% 51%;
   }
 }
 
