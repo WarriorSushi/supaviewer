@@ -101,7 +101,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'login' }: AuthMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-card">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-gradient-cinema">
             {mode === 'login' ? 'Welcome Back' : 'Join SupaViewer'}
@@ -150,7 +150,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'login' }: AuthMod
               <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+              <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
             </div>
           </div>
 
