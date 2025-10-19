@@ -87,6 +87,7 @@ export async function POST(request: NextRequest) {
         .insert({
           name: validatedData.creator_name,
           slug: creatorSlug,
+          email: validatedData.creator_email,
           bio: null,
           website: validatedData.creator_website || null,
           twitter_handle: validatedData.creator_twitter || null,
