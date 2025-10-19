@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
         creator_id: creatorId,
         ai_tool: validatedData.ai_tool,
         genre: validatedData.genre || null,
-        duration_seconds: 0, // Will be updated later
+        duration_seconds: 30, // Placeholder - will be updated by admin
         status: 'pending', // Requires approval
         submitted_by_user_id: user?.id || null,
       })
