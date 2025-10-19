@@ -104,18 +104,18 @@ export default async function AdminDashboard() {
 
   // Combine and sort recent activity
   const recentActivity = [
-    ...(recentVideos || []).map((video: { id: string; title: string; status: string; created_at: string; creator: { name: string } | null }) => ({
+    ...(recentVideos || []).map((video: { id: string; title: string; status: string; created_at: string; creator: { name: string }[] | null }) => ({
       type: 'video' as const,
       action: video.status === 'pending' ? 'submitted' : 'approved',
       title: video.title,
-      creator: video.creator?.name,
+      creator: video.creator?.[0]?.name,
       timestamp: video.created_at,
       status: video.status,
     })),
-    ...(recentRatings || []).map((rating: { id: string; rating: number; created_at: string; video: { title: string } | null }) => ({
+    ...(recentRatings || []).map((rating: { id: string; rating: number; created_at: string; video: { title: string }[] | null }) => ({
       type: 'rating' as const,
       action: 'rated',
-      title: rating.video?.title,
+      title: rating.video?.[0]?.title,
       rating: rating.rating,
       timestamp: rating.created_at,
     })),
