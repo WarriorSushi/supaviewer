@@ -45,9 +45,9 @@ This directory contains SQL migration files for the SupaViewer database.
 
 ### `006_update_admin_email.sql` ⚠️ **ACTION REQUIRED**
 - Updates all admin RLS policies with correct admin email
-- Uses drsyedirfan93@gmail.com as admin
+- Uses [REDACTED] as admin
 - **Status**: ⚠️ Run this to fix admin dashboard access
-- **No changes needed** - just copy and run in SQL Editor
+- **Important**: Update the email in this file before running if you're not the original admin
 
 ### `thumbnail_fix.sql`
 - Fixes thumbnail URL handling
