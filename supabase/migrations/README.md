@@ -37,6 +37,12 @@ This directory contains SQL migration files for the SupaViewer database.
 - Adds email field to creators table
 - **Status**: ✅ Should already be applied
 
+### `005_add_submitted_by_user_id.sql` ⚠️ **ACTION REQUIRED**
+- Adds `submitted_by_user_id` column to videos table
+- Tracks which user submitted each video
+- **Status**: ⚠️ Required for video submission to work
+- **Run this BEFORE running 002_rls_policies.sql**
+
 ### `thumbnail_fix.sql`
 - Fixes thumbnail URL handling
 - **Status**: ✅ Should already be applied
