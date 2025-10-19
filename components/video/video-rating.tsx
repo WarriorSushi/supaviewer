@@ -191,7 +191,6 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
       const supabase = createClient()
 
       const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
       setIsAuthenticated(!!user)
 
       if (user) {
