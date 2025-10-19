@@ -23,8 +23,9 @@ This directory contains SQL migration files for the SupaViewer database.
 - Sets up Row Level Security (RLS) policies
 - Allows authenticated users to submit videos
 - Admin-only access for approving/managing content
-- **Before running**: Update the admin email at the bottom of the file (line ~198)
-- Replace `'your-admin-email@gmail.com'` with your actual admin email
+- **Before running**: Find and replace ALL instances of `'YOUR_ADMIN_EMAIL@EXAMPLE.COM'` with your actual admin email
+  - Use Find & Replace (Ctrl+H) to replace all 6 instances at once
+  - Example: Replace with `'john@gmail.com'` (keep the single quotes!)
 - This email must match the `ADMIN_EMAILS` environment variable in Vercel
 - **Status**: ⚠️ Required for video submission to work
 

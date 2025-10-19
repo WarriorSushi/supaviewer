@@ -1,10 +1,8 @@
 -- ============================================
 -- Row Level Security (RLS) Policies for SupaViewer
 -- ============================================
--- This migration sets up proper security policies for all tables
--- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/_/sql
---
--- IMPORTANT: Before running, update the admin email at the bottom of this file
+-- Simplified version using direct email matching
+-- IMPORTANT: Replace 'YOUR_ADMIN_EMAIL@EXAMPLE.COM' with your actual admin email
 -- ============================================
 
 -- ============================================
@@ -47,25 +45,23 @@ USING (user_id = auth.uid())
 WITH CHECK (user_id = auth.uid());
 
 -- Allow admins to update any creator profile
+-- REPLACE 'YOUR_ADMIN_EMAIL@EXAMPLE.COM' WITH YOUR ACTUAL ADMIN EMAIL
 CREATE POLICY "Admins can update any creator"
 ON creators
 FOR UPDATE
 TO authenticated
 USING (
-  auth.jwt() ->> 'email' IN (
-    SELECT unnest(string_to_array(current_setting('app.admin_emails', true), ','))
-  )
+  auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL@EXAMPLE.COM'
 );
 
 -- Allow admins to delete creators
+-- REPLACE 'YOUR_ADMIN_EMAIL@EXAMPLE.COM' WITH YOUR ACTUAL ADMIN EMAIL
 CREATE POLICY "Admins can delete creators"
 ON creators
 FOR DELETE
 TO authenticated
 USING (
-  auth.jwt() ->> 'email' IN (
-    SELECT unnest(string_to_array(current_setting('app.admin_emails', true), ','))
-  )
+  auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL@EXAMPLE.COM'
 );
 
 
@@ -110,36 +106,33 @@ WITH CHECK (
 );
 
 -- Allow admins to insert videos with any status
+-- REPLACE 'YOUR_ADMIN_EMAIL@EXAMPLE.COM' WITH YOUR ACTUAL ADMIN EMAIL
 CREATE POLICY "Admins can create videos with any status"
 ON videos
 FOR INSERT
 TO authenticated
 WITH CHECK (
-  auth.jwt() ->> 'email' IN (
-    SELECT unnest(string_to_array(current_setting('app.admin_emails', true), ','))
-  )
+  auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL@EXAMPLE.COM'
 );
 
 -- Allow admins to update any video (approve, reject, edit, etc.)
+-- REPLACE 'YOUR_ADMIN_EMAIL@EXAMPLE.COM' WITH YOUR ACTUAL ADMIN EMAIL
 CREATE POLICY "Admins can update videos"
 ON videos
 FOR UPDATE
 TO authenticated
 USING (
-  auth.jwt() ->> 'email' IN (
-    SELECT unnest(string_to_array(current_setting('app.admin_emails', true), ','))
-  )
+  auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL@EXAMPLE.COM'
 );
 
 -- Allow admins to delete videos
+-- REPLACE 'YOUR_ADMIN_EMAIL@EXAMPLE.COM' WITH YOUR ACTUAL ADMIN EMAIL
 CREATE POLICY "Admins can delete videos"
 ON videos
 FOR DELETE
 TO authenticated
 USING (
-  auth.jwt() ->> 'email' IN (
-    SELECT unnest(string_to_array(current_setting('app.admin_emails', true), ','))
-  )
+  auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL@EXAMPLE.COM'
 );
 
 
@@ -188,45 +181,11 @@ TO authenticated
 USING (user_id = auth.uid());
 
 -- Allow admins to delete any rating (moderation)
+-- REPLACE 'YOUR_ADMIN_EMAIL@EXAMPLE.COM' WITH YOUR ACTUAL ADMIN EMAIL
 CREATE POLICY "Admins can delete any rating"
 ON ratings
 FOR DELETE
 TO authenticated
 USING (
-  auth.jwt() ->> 'email' IN (
-    SELECT unnest(string_to_array(current_setting('app.admin_emails', true), ','))
-  )
+  auth.jwt() ->> 'email' = 'YOUR_ADMIN_EMAIL@EXAMPLE.COM'
 );
-
-
--- ============================================
--- CONFIGURE ADMIN EMAILS
--- ============================================
--- IMPORTANT: Replace 'your-admin-email@gmail.com' with your actual admin email
--- This must match the ADMIN_EMAILS environment variable in Vercel
--- ============================================
-
-ALTER DATABASE postgres SET app.admin_emails = 'your-admin-email@gmail.com';
-
--- For multiple admins, use comma-separated list:
--- ALTER DATABASE postgres SET app.admin_emails = 'admin1@gmail.com,admin2@gmail.com';
-
--- ============================================
--- VERIFICATION QUERIES (Optional)
--- ============================================
--- Run these to verify the policies were created successfully
-
--- Check if RLS is enabled on all tables
--- SELECT tablename, rowsecurity
--- FROM pg_tables
--- WHERE schemaname = 'public'
--- AND tablename IN ('videos', 'creators', 'ratings');
-
--- List all policies
--- SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual
--- FROM pg_policies
--- WHERE schemaname = 'public'
--- ORDER BY tablename, policyname;
-
--- Verify admin email configuration
--- SHOW app.admin_emails;
