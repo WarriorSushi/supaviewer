@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { VideoCard } from '@/components/video/video-card'
 import { ExternalLink, Twitter, Star, Film } from 'lucide-react'
 import Link from 'next/link'
+import type { VideoWithCreator } from '@/types'
 
 interface CreatorPageProps {
   params: Promise<{ slug: string }>
