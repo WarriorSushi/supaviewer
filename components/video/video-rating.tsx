@@ -277,7 +277,7 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
       // Reload page to update average rating
       window.location.reload()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred' || 'An error occurred')
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
       setUserRating(existingRatingId ? userRating : 0) // Revert on error
     } finally {
       setIsLoading(false)
@@ -305,7 +305,7 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
       // Reload page to update average rating
       window.location.reload()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred' || 'An error occurred')
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setIsLoading(false)
     }
