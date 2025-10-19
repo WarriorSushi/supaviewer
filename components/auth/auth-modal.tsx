@@ -150,7 +150,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'login' }: AuthMod
               <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+              <span className="bg-[#252F3E] px-2 text-muted-foreground">Or continue with email</span>
             </div>
           </div>
 
