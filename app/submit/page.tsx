@@ -307,7 +307,12 @@ export default function SubmitPage() {
               </div>
             </div>
 
-            <Button type="submit" size="lg" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={isSubmitting}
+              className="bg-gradient-to-r from-crimson to-amber hover:from-crimson/90 hover:to-amber/90 text-white font-bold shadow-lg hover:shadow-xl transition-all"
+            >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSubmitting ? 'Submitting...' : 'Submit Video'}
             </Button>
