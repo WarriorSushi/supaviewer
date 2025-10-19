@@ -17,12 +17,29 @@ This directory contains SQL migration files for the SupaViewer database.
 - Creates the initial database schema
 - Sets up tables: creators, videos, ratings
 - Defines relationships and constraints
+- **Status**: ✅ Should already be applied if database exists
 
 ### `002_rls_policies.sql` ⚠️ **ACTION REQUIRED**
 - Sets up Row Level Security (RLS) policies
-- **Before running**: Update the admin email at the bottom of the file
+- Allows authenticated users to submit videos
+- Admin-only access for approving/managing content
+- **Before running**: Update the admin email at the bottom of the file (line ~198)
 - Replace `'your-admin-email@gmail.com'` with your actual admin email
 - This email must match the `ADMIN_EMAILS` environment variable in Vercel
+- **Status**: ⚠️ Required for video submission to work
+
+### `003_convert_to_5_star_rating.sql`
+- Converts rating system to 5-star ratings
+- Updates existing ratings data
+- **Status**: ✅ Should already be applied
+
+### `004_add_email_to_creators.sql`
+- Adds email field to creators table
+- **Status**: ✅ Should already be applied
+
+### `thumbnail_fix.sql`
+- Fixes thumbnail URL handling
+- **Status**: ✅ Should already be applied
 
 ## Important Notes
 
