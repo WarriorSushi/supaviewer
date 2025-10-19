@@ -145,9 +145,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Submission error:', error)
 
-    if (error.name === 'ZodError') {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid form data', details: (error as z.ZodError).issues },
+        { error: 'Invalid form data', details: error.issues },
         { status: 400 }
       )
     }
