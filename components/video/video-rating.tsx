@@ -5,6 +5,7 @@ import { Rating, RatingButton } from '@/components/ui/shadcn-io/rating'
 import { Button } from '@/components/ui/button'
 import { Share2, X, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
+import { AuthModal } from '@/components/auth/auth-modal'
 
 interface VideoRatingDisplayProps {
   avgRating: number | null
@@ -24,6 +25,7 @@ interface VideoRatingProps {
 export function VideoRating({ avgRating, totalRatings, videoId }: VideoRatingProps) {
   const [userRating, setUserRating] = useState(0)
   const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+  const [authModalOpen, setAuthModalOpen] = useState(false)
 
   const handleRatingChange = (rating: number) => {
     // Store rating temporarily in localStorage
@@ -40,7 +42,8 @@ export function VideoRating({ avgRating, totalRatings, videoId }: VideoRatingPro
   }
 
   const handleSignIn = () => {
-    window.location.href = '/auth'
+    setShowAuthPrompt(false)
+    setAuthModalOpen(true)
   }
 
   const handleCopyLink = () => {
@@ -111,39 +114,40 @@ export function VideoRating({ avgRating, totalRatings, videoId }: VideoRatingPro
       {/* Auth Prompt Banner */}
       {showAuthPrompt && userRating > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 duration-300">
-          <div className="bg-card border-2 border-primary rounded-xl p-5 shadow-2xl max-w-sm mx-4 relative">
+          <div className="bg-gradient-to-br from-[#1e2936] via-[#252F3E] to-[#2a3544] border border-amber/30 rounded-xl p-6 shadow-[0_0_60px_rgba(245,158,11,0.3)] max-w-sm mx-4 relative ring-1 ring-amber/20">
             <button
               onClick={() => setShowAuthPrompt(false)}
-              className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-white/10 p-1"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <LogIn className="w-5 h-5 text-primary" />
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber/20 to-primary/20 flex items-center justify-center flex-shrink-0 ring-2 ring-amber/30">
+                <LogIn className="w-6 h-6 text-amber" />
               </div>
 
-              <div className="flex-1 pr-4">
-                <h4 className="text-base font-bold text-foreground mb-1">
-                  Save your rating
+              <div className="flex-1 pr-6">
+                <h4 className="text-lg font-bold text-foreground mb-2 flex items-center gap-2">
+                  Save ratings, videos and more
+                  <span className="text-amber text-xl">⭐</span>
                 </h4>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Sign in to save your <span className="font-semibold text-secondary">{userRating}-star</span> rating
+                <p className="text-sm text-muted-foreground mb-4">
+                  Sign in to save your <span className="font-bold text-amber">{userRating}-star</span> rating and unlock other features
                 </p>
 
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <Button
                     onClick={handleSignIn}
-                    className="flex-1 bg-primary hover:bg-primary/90 h-8 text-xs"
+                    className="flex-1 bg-gradient-to-r from-crimson via-primary to-amber hover:from-crimson/90 hover:via-primary/90 hover:to-amber/90 text-white font-bold h-10 shadow-lg hover:shadow-xl transition-all animate-gradient-x"
                   >
-                    <LogIn className="w-3 h-3 mr-1" />
+                    <LogIn className="w-4 h-4 mr-2" />
                     Sign In
                   </Button>
                   <Button
                     onClick={() => setShowAuthPrompt(false)}
                     variant="outline"
-                    className="h-8 text-xs px-3"
+                    className="h-10 px-4 border-white/10 hover:bg-white/5"
                   >
                     Later
                   </Button>
@@ -153,6 +157,8 @@ export function VideoRating({ avgRating, totalRatings, videoId }: VideoRatingPro
           </div>
         </div>
       )}
+
+      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </div>
   )
 }
@@ -183,6 +189,7 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
   const [existingRatingId, setExistingRatingId] = useState<string | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+  const [authModalOpen, setAuthModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -312,7 +319,8 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
   }
 
   const handleSignIn = () => {
-    window.location.href = '/auth'
+    setShowAuthPrompt(false)
+    setAuthModalOpen(true)
   }
 
   return (
@@ -359,39 +367,40 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
       {/* Auth Prompt Banner - Only for non-authenticated users */}
       {!isAuthenticated && showAuthPrompt && userRating > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 duration-300">
-          <div className="bg-card border-2 border-primary rounded-xl p-5 shadow-2xl max-w-sm mx-4 relative">
+          <div className="bg-gradient-to-br from-[#1e2936] via-[#252F3E] to-[#2a3544] border border-amber/30 rounded-xl p-6 shadow-[0_0_60px_rgba(245,158,11,0.3)] max-w-sm mx-4 relative ring-1 ring-amber/20">
             <button
               onClick={() => setShowAuthPrompt(false)}
-              className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-white/10 p-1"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <LogIn className="w-5 h-5 text-primary" />
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber/20 to-primary/20 flex items-center justify-center flex-shrink-0 ring-2 ring-amber/30">
+                <LogIn className="w-6 h-6 text-amber" />
               </div>
 
-              <div className="flex-1 pr-4">
-                <h4 className="text-base font-bold text-foreground mb-1">
-                  Save your rating
+              <div className="flex-1 pr-6">
+                <h4 className="text-lg font-bold text-foreground mb-2 flex items-center gap-2">
+                  Save ratings, videos and more
+                  <span className="text-amber text-xl">⭐</span>
                 </h4>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Sign in to save your <span className="font-semibold text-secondary">{userRating}-star</span> rating and unlock other features
+                <p className="text-sm text-muted-foreground mb-4">
+                  Sign in to save your <span className="font-bold text-amber">{userRating}-star</span> rating and unlock other features
                 </p>
 
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <Button
                     onClick={handleSignIn}
-                    className="flex-1 bg-primary hover:bg-primary/90 h-8 text-xs"
+                    className="flex-1 bg-gradient-to-r from-crimson via-primary to-amber hover:from-crimson/90 hover:via-primary/90 hover:to-amber/90 text-white font-bold h-10 shadow-lg hover:shadow-xl transition-all animate-gradient-x"
                   >
-                    <LogIn className="w-3 h-3 mr-1" />
+                    <LogIn className="w-4 h-4 mr-2" />
                     Sign In
                   </Button>
                   <Button
                     onClick={() => setShowAuthPrompt(false)}
                     variant="outline"
-                    className="h-8 text-xs px-3"
+                    className="h-10 px-4 border-white/10 hover:bg-white/5"
                   >
                     Later
                   </Button>
@@ -401,6 +410,8 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
           </div>
         </div>
       )}
+
+      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </>
   )
 }
