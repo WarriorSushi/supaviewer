@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import type { VideoWithCreator, CreatorWithStats } from '@/types'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { VideoCard } from '@/components/video/video-card'
 import { ExternalLink, Twitter, Star, Film } from 'lucide-react'

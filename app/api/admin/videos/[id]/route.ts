@@ -75,10 +75,10 @@ export async function GET(
     }
 
     return NextResponse.json({ video })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in video detail API:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }
@@ -122,7 +122,15 @@ export async function PATCH(
     }
 
     // Update video
-    const updateData: any = {
+    const updateData: {
+      title?: string
+      description?: string
+      ai_tool?: string
+      genre?: string
+      status?: 'pending' | 'approved' | 'rejected'
+      featured?: boolean
+      updated_at: string
+    } = {
       ...validatedData,
       updated_at: new Date().toISOString(),
     }
@@ -148,18 +156,18 @@ export async function PATCH(
     }
 
     return NextResponse.json({ video })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in video update API:', error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Invalid data', details: (error as z.ZodError).issues },
         { status: 400 }
       )
     }
 
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }
@@ -217,10 +225,10 @@ export async function DELETE(
       success: true,
       message: 'Video deleted successfully',
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in video delete API:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }

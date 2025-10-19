@@ -32,8 +32,8 @@ export function UserMenu({ user }: UserMenuProps) {
 
       toast.success('Logged out successfully')
       window.location.reload()
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to log out')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred' || 'Failed to log out')
     } finally {
       setIsLoading(false)
     }

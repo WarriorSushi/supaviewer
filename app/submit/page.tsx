@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { videoSubmissionSchema, extractYouTubeId, type VideoSubmission } from '@/lib/validations'
 import { Button } from '@/components/ui/button'
@@ -73,8 +74,8 @@ export default function SubmitPage() {
 
       toast.success(result.message)
       setIsSuccess(true)
-    } catch (error: any) {
-      toast.error(error.message || 'An error occurred')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setIsSubmitting(false)
     }
@@ -96,7 +97,7 @@ export default function SubmitPage() {
               Submit Another Video
             </Button>
             <Button asChild>
-              <a href="/">Browse Videos</a>
+              <Link href="/">Browse Videos</Link>
             </Button>
           </div>
         </div>
@@ -259,7 +260,7 @@ export default function SubmitPage() {
               )}
               {!user && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  We'll never share your email publicly
+                  We&apos;ll never share your email publicly
                 </p>
               )}
             </div>

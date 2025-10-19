@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { FileText, Video, Users, Star, Clock, TrendingUp, CheckCircle2, UserCircle } from 'lucide-react'
+import { FileText, Video, Users, Star, Clock, TrendingUp, CheckCircle2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 export default async function AdminDashboard() {
@@ -42,8 +42,7 @@ export default async function AdminDashboard() {
   ])
 
   // Get total users (from auth.users - this needs admin privileges)
-  // For now, we'll estimate or skip if we don't have service role access
-  const totalUsers = 0 // Placeholder - would need service role key
+  // For now, we'll estimate or skip if we don&apos;t have service role access
 
   const stats = [
     {
@@ -105,16 +104,16 @@ export default async function AdminDashboard() {
 
   // Combine and sort recent activity
   const recentActivity = [
-    ...(recentVideos || []).map((video: any) => ({
-      type: 'video',
+    ...(recentVideos || []).map((video: { id: string; title: string; status: string; created_at: string; creator: { name: string } | null }) => ({
+      type: 'video' as const,
       action: video.status === 'pending' ? 'submitted' : 'approved',
       title: video.title,
       creator: video.creator?.name,
       timestamp: video.created_at,
       status: video.status,
     })),
-    ...(recentRatings || []).map((rating: any) => ({
-      type: 'rating',
+    ...(recentRatings || []).map((rating: { id: string; rating: number; created_at: string; video: { title: string } | null }) => ({
+      type: 'rating' as const,
       action: 'rated',
       title: rating.video?.title,
       rating: rating.rating,
@@ -130,7 +129,7 @@ export default async function AdminDashboard() {
       <div>
         <h1 className="text-3xl font-bold text-gradient-cinema">Dashboard Overview</h1>
         <p className="text-muted-foreground mt-1">
-          Monitor your platform's performance and activity
+          Monitor your platform&apos;s performance and activity
         </p>
       </div>
 
@@ -210,12 +209,12 @@ export default async function AdminDashboard() {
                           <p className="text-sm text-foreground">
                             <span className="font-semibold">{'creator' in activity ? activity.creator : 'Unknown'}</span>{' '}
                             <span className="text-muted-foreground">{activity.action}</span>{' '}
-                            <span className="font-medium">"{activity.title}"</span>
+                            <span className="font-medium">&ldquo;{activity.title}&rdquo;</span>
                           </p>
                         ) : (
                           <p className="text-sm text-foreground">
                             <span className="text-muted-foreground">User rated</span>{' '}
-                            <span className="font-medium">"{activity.title}"</span>{' '}
+                            <span className="font-medium">&ldquo;{activity.title}&rdquo;</span>{' '}
                             <span className="font-semibold text-amber">{'rating' in activity ? activity.rating : 0}★</span>
                           </p>
                         )}

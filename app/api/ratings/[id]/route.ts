@@ -9,7 +9,7 @@ const updateRatingSchema = z.object({
 })
 
 // Helper to recalculate video rating
-async function recalculateVideoRating(videoId: string, supabase: any) {
+async function recalculateVideoRating(videoId: string, supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: ratings } = await supabase
     .from('ratings')
     .select('rating')
@@ -23,7 +23,7 @@ async function recalculateVideoRating(videoId: string, supabase: any) {
     return
   }
 
-  const avgRating = ratings.reduce((sum: number, r: any) => sum + r.rating, 0) / ratings.length
+  const avgRating = ratings.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / ratings.length
   const totalRatings = ratings.length
 
   await supabase
@@ -84,12 +84,12 @@ export async function PATCH(
     await recalculateVideoRating(existingRating.video_id, supabase)
 
     return NextResponse.json({ rating })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Update rating error:', error)
 
     if (error.name === 'ZodError') {
       return NextResponse.json(
-        { error: 'Invalid rating data', details: error.errors },
+        { error: 'Invalid rating data', details: (error as z.ZodError).issues },
         { status: 400 }
       )
     }
@@ -142,7 +142,7 @@ export async function DELETE(
     await recalculateVideoRating(existingRating.video_id, supabase)
 
     return NextResponse.json({ message: 'Rating deleted successfully' })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Delete rating error:', error)
     return NextResponse.json({ error: 'An error occurred' }, { status: 500 })
   }

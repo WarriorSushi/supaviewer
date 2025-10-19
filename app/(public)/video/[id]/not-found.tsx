@@ -18,7 +18,7 @@ export default function VideoNotFound() {
         <div className="space-y-3">
           <h1 className="text-4xl font-bold text-foreground">Video Not Found</h1>
           <p className="text-lg text-muted-foreground">
-            This video doesn't exist or is no longer available.
+            This video doesn&apos;t exist or is no longer available.
           </p>
           <p className="text-sm text-muted-foreground">
             It may have been removed, is still pending approval, or the link is incorrect.

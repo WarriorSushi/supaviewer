@@ -59,10 +59,10 @@ export async function GET(
         video_count: videoCount || 0,
       },
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in creator detail API:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }
@@ -123,7 +123,15 @@ export async function PATCH(
     }
 
     // Update creator
-    const updateData: any = {}
+    const updateData: {
+      name?: string
+      slug?: string
+      email?: string
+      bio?: string | null
+      website?: string | null
+      twitter_handle?: string | null
+      avatar_url?: string | null
+    } = {}
     if (validatedData.name !== undefined) updateData.name = validatedData.name
     if (validatedData.slug !== undefined) updateData.slug = validatedData.slug
     if (validatedData.email !== undefined) updateData.email = validatedData.email
@@ -151,18 +159,18 @@ export async function PATCH(
       creator,
       message: 'Creator updated successfully',
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in update creator API:', error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Invalid data', details: (error as z.ZodError).issues },
         { status: 400 }
       )
     }
 
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }
@@ -230,10 +238,10 @@ export async function DELETE(
       success: true,
       message: 'Creator deleted successfully',
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in delete creator API:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }

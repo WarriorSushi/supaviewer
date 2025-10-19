@@ -117,10 +117,10 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil((count || 0) / limit),
       },
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in creators API:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }
@@ -189,18 +189,18 @@ export async function POST(request: NextRequest) {
       creator,
       message: 'Creator created successfully',
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in create creator API:', error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Invalid data', details: (error as z.ZodError).issues },
         { status: 400 }
       )
     }
 
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }

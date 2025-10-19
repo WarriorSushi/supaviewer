@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Search, Plus, Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 interface Creator {
   id: string

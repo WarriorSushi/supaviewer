@@ -1,5 +1,3 @@
-import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
 import { VideoCard } from '@/components/video/video-card'
 import type { VideoWithCreator } from '@/types'
 

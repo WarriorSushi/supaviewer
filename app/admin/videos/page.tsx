@@ -137,8 +137,8 @@ export default function VideosPage() {
 
       setVideos(data.videos)
       setPagination(data.pagination)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to load videos')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
@@ -184,8 +184,8 @@ export default function VideosPage() {
 
       toast.success(video.featured ? 'Video unfeatured' : 'Video featured!')
       fetchVideos(pagination.page)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update video')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setActionLoading(false)
     }
@@ -222,8 +222,8 @@ export default function VideosPage() {
       setDeleteDialogOpen(false)
       setDeleteVideo(null)
       fetchVideos(pagination.page)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete video')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setActionLoading(false)
     }
@@ -522,7 +522,7 @@ export default function VideosPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Video?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteVideo?.title}"? This action cannot be
+              Are you sure you want to delete &ldquo;{deleteVideo?.title}&rdquo;? This action cannot be
               undone. All associated ratings will also be deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>

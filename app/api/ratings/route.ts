@@ -10,7 +10,7 @@ const ratingSchema = z.object({
 })
 
 // Helper to recalculate video rating
-async function recalculateVideoRating(videoId: string, supabase: any) {
+async function recalculateVideoRating(videoId: string, supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: ratings } = await supabase
     .from('ratings')
     .select('rating')
@@ -24,7 +24,7 @@ async function recalculateVideoRating(videoId: string, supabase: any) {
     return
   }
 
-  const avgRating = ratings.reduce((sum: number, r: any) => sum + r.rating, 0) / ratings.length
+  const avgRating = ratings.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / ratings.length
   const totalRatings = ratings.length
 
   await supabase
@@ -84,12 +84,12 @@ export async function POST(request: NextRequest) {
     await recalculateVideoRating(validatedData.video_id, supabase)
 
     return NextResponse.json({ rating }, { status: 201 })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Rating error:', error)
 
     if (error.name === 'ZodError') {
       return NextResponse.json(
-        { error: 'Invalid rating data', details: error.errors },
+        { error: 'Invalid rating data', details: (error as z.ZodError).issues },
         { status: 400 }
       )
     }

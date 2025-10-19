@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { videoSubmissionSchema, extractYouTubeId } from '@/lib/validations'
+import { z } from 'zod'
 
 // Fetch YouTube video metadata using oEmbed API
 async function getYouTubeMetadata(videoId: string) {
@@ -141,12 +142,12 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     )
-  } catch (error: any) {
+  } catch (error) {
     console.error('Submission error:', error)
 
     if (error.name === 'ZodError') {
       return NextResponse.json(
-        { error: 'Invalid form data', details: error.errors },
+        { error: 'Invalid form data', details: (error as z.ZodError).issues },
         { status: 400 }
       )
     }

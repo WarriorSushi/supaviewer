@@ -184,7 +184,6 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showAuthPrompt, setShowAuthPrompt] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -278,8 +277,8 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
 
       // Reload page to update average rating
       window.location.reload()
-    } catch (error: any) {
-      toast.error(error.message || 'An error occurred')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred' || 'An error occurred')
       setUserRating(existingRatingId ? userRating : 0) // Revert on error
     } finally {
       setIsLoading(false)
@@ -306,8 +305,8 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
 
       // Reload page to update average rating
       window.location.reload()
-    } catch (error: any) {
-      toast.error(error.message || 'An error occurred')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred' || 'An error occurred')
     } finally {
       setIsLoading(false)
     }
@@ -328,7 +327,6 @@ export function VideoRatingInteractive({ videoId }: VideoRatingInteractiveProps)
               value={userRating}
               onValueChange={handleRatingChange}
               className="gap-1"
-              disabled={isLoading}
             >
               {Array.from({ length: 5 }).map((_, index) => (
                 <RatingButton

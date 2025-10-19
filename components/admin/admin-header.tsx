@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -31,8 +32,8 @@ export function AdminHeader({ user }: AdminHeaderProps) {
 
       toast.success('Logged out successfully')
       window.location.href = '/'
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to log out')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setIsLoading(false)
     }
@@ -89,10 +90,10 @@ export function AdminHeader({ user }: AdminHeaderProps) {
             <DropdownMenuSeparator />
 
             <DropdownMenuItem asChild>
-              <a href="/" className="cursor-pointer">
+              <Link href="/" className="cursor-pointer">
                 <UserIcon className="mr-2 h-4 w-4" />
                 View Public Site
-              </a>
+              </Link>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />

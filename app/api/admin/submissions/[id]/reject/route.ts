@@ -96,18 +96,18 @@ export async function POST(
       video: updatedVideo,
       message: 'Video rejected successfully',
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in rejection API:', error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Invalid data', details: (error as z.ZodError).issues },
         { status: 400 }
       )
     }
 
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }

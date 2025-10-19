@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from 'next/server'
  * This handles session refresh and authentication
  */
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
+  const supabaseResponse = NextResponse.next({
     request,
   })
 
@@ -31,7 +31,6 @@ export async function updateSession(request: NextRequest) {
   // Refresh session if expired - required for Server Components
   // https://supabase.com/docs/guides/auth/server-side/nextjs
   const {
-    data: { user },
   } = await supabase.auth.getUser()
 
   return supabaseResponse

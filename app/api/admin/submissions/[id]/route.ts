@@ -67,10 +67,10 @@ export async function GET(
     }
 
     return NextResponse.json({ video })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in submission detail API:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }
@@ -130,10 +130,10 @@ export async function PATCH(
     }
 
     return NextResponse.json({ video })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in submission update API:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }

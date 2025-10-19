@@ -68,11 +68,6 @@ export default async function VideoPage({ params }: VideoPageProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Format rating to 1 decimal place
-  const formattedRating = videoData.avg_rating
-    ? videoData.avg_rating.toFixed(1)
-    : 'No ratings yet'
-
   return (
     <div className="min-h-screen">
       {/* Main Content Container */}

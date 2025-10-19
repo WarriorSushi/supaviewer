@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Search, Upload } from "lucide-react";
 import { useState, useEffect } from "react";
-import { VideoFilters } from "@/components/filters/video-filters";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { UserMenu } from "@/components/auth/user-menu";
 import { createClient } from "@/lib/supabase/client";
@@ -174,11 +173,6 @@ export function Navbar() {
                   Sign In
                 </Button>
               )}
-            </div>
-
-            {/* Filters */}
-            <div className="pb-4 border-t border-border pt-4">
-              <VideoFilters />
             </div>
 
             <div className="border-t border-border pt-4">

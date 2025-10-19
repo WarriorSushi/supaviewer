@@ -192,8 +192,8 @@ export function CreatorEditorModal({
 
       onSuccess()
       onOpenChange(false)
-    } catch (error: any) {
-      toast.error(error.message || 'An error occurred')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
@@ -327,7 +327,7 @@ export function CreatorEditorModal({
               disabled={loading}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Direct link to creator's avatar image
+              Direct link to creator&apos;s avatar image
             </p>
           </div>
 

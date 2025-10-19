@@ -85,8 +85,8 @@ export default function SubmissionsPage() {
 
       setSubmissions(data.videos)
       setPagination(data.pagination)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to load submissions')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
@@ -132,8 +132,8 @@ export default function SubmissionsPage() {
 
       toast.success('Video approved!')
       fetchSubmissions(activeTab, search, pagination.page)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to approve video')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setActionLoading(false)
     }
@@ -157,8 +157,8 @@ export default function SubmissionsPage() {
 
       toast.success('Video rejected')
       fetchSubmissions(activeTab, search, pagination.page)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to reject video')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setActionLoading(false)
     }

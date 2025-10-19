@@ -89,8 +89,8 @@ export default function CreatorsPage() {
 
       setCreators(data.creators)
       setPagination(data.pagination)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to load creators')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
@@ -150,8 +150,8 @@ export default function CreatorsPage() {
       setDeleteDialogOpen(false)
       setDeleteCreator(null)
       fetchCreators(pagination.page)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete creator')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setActionLoading(false)
     }
@@ -375,7 +375,7 @@ export default function CreatorsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Creator?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteCreator?.name}"? This action cannot be
+              Are you sure you want to delete &ldquo;{deleteCreator?.name}&rdquo;? This action cannot be
               undone.
               {deleteCreator?.video_count && deleteCreator.video_count > 0 ? (
                 <span className="block mt-2 text-destructive font-semibold">

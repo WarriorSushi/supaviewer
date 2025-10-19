@@ -64,8 +64,8 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'login' }: AuthMod
         resetForm()
         window.location.reload()
       }
-    } catch (error: any) {
-      toast.error(error.message || 'An error occurred')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
@@ -82,8 +82,8 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'login' }: AuthMod
       })
 
       if (error) throw error
-    } catch (error: any) {
-      toast.error(error.message || 'An error occurred')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
       setLoading(false)
     }
   }

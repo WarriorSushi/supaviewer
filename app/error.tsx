@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AlertCircle, RefreshCw, Home } from 'lucide-react'
 
@@ -35,7 +36,7 @@ export default function Error({
             Something went wrong
           </h2>
           <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            We encountered an unexpected error. Don't worry, our team has been notified.
+            We encountered an unexpected error. Don&apos;t worry, our team has been notified.
           </p>
 
           {/* Error Details (Development only) */}
@@ -59,10 +60,10 @@ export default function Error({
             Try Again
           </Button>
           <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-            <a href="/">
+            <Link href="/">
               <Home className="w-4 h-4 mr-2" />
               Back to Home
-            </a>
+            </Link>
           </Button>
         </div>
 

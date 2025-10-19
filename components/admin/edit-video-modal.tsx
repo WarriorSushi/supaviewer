@@ -117,8 +117,8 @@ export function EditVideoModal({
       toast.success('Video updated successfully!')
       onSuccess()
       onOpenChange(false)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update video')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
@@ -191,7 +191,7 @@ export function EditVideoModal({
             {/* Status Select */}
             <div>
               <Label htmlFor="status">Status</Label>
-              <Select value={status} onValueChange={(value: any) => setStatus(value)} disabled={loading}>
+              <Select value={status} onValueChange={(value: 'pending' | 'approved' | 'rejected') => setStatus(value)} disabled={loading}>
                 <SelectTrigger id="status">
                   <SelectValue />
                 </SelectTrigger>

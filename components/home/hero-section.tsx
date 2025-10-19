@@ -15,7 +15,7 @@ export function HeroSection() {
               <span className="text-gradient-cinema">AI Cinema</span>
             </h1>
             <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Curated AI-generated videos from the world's best creators
+              Curated AI-generated videos from the world&apos;s best creators
             </p>
           </div>
 

@@ -129,7 +129,21 @@ export function SubmissionReviewModal({
       }
 
       // Prepare payload
-      const payload: any = {
+      const payload: {
+        title: string
+        description: string
+        ai_tool: string
+        genre: string
+        featured: boolean
+        creator_id?: string
+        new_creator?: {
+          name: string
+          email: string
+          bio?: string
+          website?: string
+          twitter_handle?: string
+        }
+      } = {
         title: title.trim(),
         description: description.trim(),
         ai_tool: aiTool.trim(),
@@ -175,8 +189,8 @@ export function SubmissionReviewModal({
       toast.success('Video approved and published!')
       onSuccess()
       onOpenChange(false)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to approve video')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
@@ -203,8 +217,8 @@ export function SubmissionReviewModal({
       toast.success('Video rejected')
       onSuccess()
       onOpenChange(false)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to reject video')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setLoading(false)
     }

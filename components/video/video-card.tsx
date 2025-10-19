@@ -4,7 +4,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Star, Film } from 'lucide-react'
 import type { VideoWithCreator } from '@/types'
-import { cn } from '@/lib/utils'
 import { useState } from 'react'
 
 interface VideoCardProps {
@@ -13,7 +12,7 @@ interface VideoCardProps {
   featured?: boolean
 }
 
-export function VideoCard({ video, priority = false, featured = false }: VideoCardProps) {
+export function VideoCard({ video, priority = false }: VideoCardProps) {
   const displayRating = video.avg_rating ? video.avg_rating.toFixed(1) : 'N/A'
   const ratingCount = video.total_ratings
   const [imageError, setImageError] = useState(false)
