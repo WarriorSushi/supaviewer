@@ -166,7 +166,7 @@ export function SubmissionReviewModal({
           email: newCreatorEmail.trim(),
           bio: newCreatorBio.trim() || undefined,
           website: newCreatorWebsite.trim() || undefined,
-          twitter: newCreatorTwitter.trim() || undefined,
+          twitter_handle: newCreatorTwitter.trim() || undefined,
         }
       } else {
         toast.error('Please select or create a creator')
