@@ -1,0 +1,21 @@
+
+> supaviewer@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 3000
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
+- Environments: .env.local
+
+✓ Starting...
+✓ Ready in 1846ms
+○ Compiling / ...
+ GET / 200 in 11.8s (compile: 2.2s, proxy.ts: 38ms, render: 9.5s)
+ GET / 200 in 2.2s (compile: 36ms, proxy.ts: 597ms, render: 1571ms)
+ GET / 200 in 1873ms (compile: 52ms, proxy.ts: 1162ms, render: 659ms)
+ GET / 200 in 1819ms (compile: 67ms, proxy.ts: 652ms, render: 1101ms)
+ GET / 200 in 2.1s (compile: 29ms, proxy.ts: 39ms, render: 2.0s)
+ GET / 200 in 1893ms (compile: 34ms, proxy.ts: 51ms, render: 1808ms)
+ GET / 200 in 2.2s (compile: 8ms, proxy.ts: 22ms, render: 2.1s)
+ GET /films 200 in 1507ms (compile: 942ms, proxy.ts: 11ms, render: 554ms)
+ GET /films/1-afterlight-valley 200 in 2.4s (compile: 1495ms, proxy.ts: 14ms, render: 862ms)
