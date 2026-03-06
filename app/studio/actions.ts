@@ -50,6 +50,85 @@ export async function createCreatorProfile(formData: FormData) {
   redirect("/studio?created=1");
 }
 
+export async function updateViewerProfile(formData: FormData) {
+  const { profile } = await getCurrentSessionProfile();
+
+  if (!profile) {
+    redirect("/login?next=/studio");
+  }
+
+  const displayName = String(formData.get("displayName") ?? "").trim();
+  const bio = String(formData.get("bio") ?? "").trim();
+
+  if (!displayName) {
+    redirect("/studio?error=profile-missing-fields");
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      display_name: displayName,
+      bio,
+    })
+    .eq("id", profile.id);
+
+  if (error) {
+    redirect("/studio?error=profile-update-failed");
+  }
+
+  revalidatePath("/studio");
+  revalidatePath("/");
+  redirect("/studio?profile=updated");
+}
+
+export async function updateCreatorProfile(formData: FormData) {
+  const { profile } = await getCurrentSessionProfile();
+
+  if (!profile) {
+    redirect("/login?next=/studio");
+  }
+
+  const name = String(formData.get("name") ?? "").trim();
+  const headline = String(formData.get("headline") ?? "").trim();
+  const bio = String(formData.get("bio") ?? "").trim();
+  const location = String(formData.get("location") ?? "").trim();
+
+  if (!name || !headline || !bio) {
+    redirect("/studio?error=creator-missing-fields");
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data: creator, error: creatorError } = await supabase
+    .from("creators")
+    .select("id, slug")
+    .eq("profile_id", profile.id)
+    .maybeSingle();
+
+  if (creatorError || !creator) {
+    redirect("/studio?error=creator-not-found");
+  }
+
+  const { error } = await supabase
+    .from("creators")
+    .update({
+      name,
+      headline,
+      bio,
+      location,
+    })
+    .eq("id", creator.id);
+
+  if (error) {
+    redirect("/studio?error=creator-update-failed");
+  }
+
+  revalidatePath("/studio");
+  revalidatePath(`/creators/${creator.slug}`);
+  revalidatePath("/creators");
+  redirect("/studio?creator=updated");
+}
+
 export async function requestCreatorClaim(creatorId: string) {
   const { profile } = await getCurrentSessionProfile();
 
@@ -104,10 +183,20 @@ export async function approveCreatorClaim(claimId: string, creatorId: string, pr
 
   const supabase = createSupabaseAdminClient();
   await supabase.from("creators").update({ profile_id: profileId }).eq("id", creatorId);
-  await supabase
-    .from("creator_claim_requests")
-    .update({ status: "approved" })
-    .eq("id", claimId);
+  await supabase.from("creator_claim_requests").update({ status: "approved" }).eq("id", claimId);
   revalidatePath("/admin");
   revalidatePath("/creators");
+}
+
+export async function rejectCreatorClaim(claimId: string) {
+  const { profile } = await getCurrentSessionProfile();
+
+  if (!profile || profile.role !== "admin") {
+    redirect("/login?next=/admin");
+  }
+
+  const supabase = createSupabaseAdminClient();
+  await supabase.from("creator_claim_requests").update({ status: "rejected" }).eq("id", claimId);
+  revalidatePath("/admin");
+  revalidatePath("/library");
 }

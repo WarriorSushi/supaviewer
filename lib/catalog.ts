@@ -1,3 +1,4 @@
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type Film = {
@@ -23,6 +24,9 @@ export type Film = {
   featuredWeight: number;
   publishedAt: string | null;
   youtubeUrl: string;
+  thumbnailUrl: string;
+  visibility: string;
+  availabilityNote: string | null;
   heroClassName: string;
   cardClassName: string;
   collectionSlugs: string[];
@@ -70,7 +74,13 @@ type FilmRow = {
   views_count: number;
   saves_count: number;
   published_at: string | null;
+  visibility: string;
+  availability_note: string | null;
   creators:
+    | {
+        slug: string;
+        name: string;
+      }
     | {
         slug: string;
         name: string;
@@ -91,56 +101,56 @@ type CreatorRow = {
 
 const creatorThemes: Record<string, string> = {
   "mira-sol":
-    "bg-[radial-gradient(circle_at_top,rgba(244,195,117,0.26),transparent_54%),linear-gradient(135deg,rgba(44,59,103,0.98),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_54%),linear-gradient(135deg,rgba(38,38,44,0.98),rgba(10,10,12,0.98))]",
   "jun-vale":
-    "bg-[radial-gradient(circle_at_18%_18%,rgba(174,187,255,0.22),transparent_38%),linear-gradient(135deg,rgba(22,34,61,0.98),rgba(6,10,19,0.98))]",
+    "bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.12),transparent_38%),linear-gradient(135deg,rgba(28,28,34,0.98),rgba(8,8,11,0.98))]",
   "anik-dey":
-    "bg-[radial-gradient(circle_at_80%_0%,rgba(244,195,117,0.22),transparent_42%),linear-gradient(135deg,rgba(39,33,63,0.98),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.14),transparent_42%),linear-gradient(135deg,rgba(34,34,39,0.98),rgba(10,10,12,0.98))]",
   "ari-nox":
-    "bg-[radial-gradient(circle_at_15%_15%,rgba(255,184,184,0.18),transparent_34%),linear-gradient(135deg,rgba(66,28,38,0.98),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_15%_15%,rgba(255,255,255,0.1),transparent_34%),linear-gradient(135deg,rgba(31,31,36,0.98),rgba(10,10,12,0.98))]",
 };
 
 const filmHeroThemes: Record<string, string> = {
   "afterlight-valley":
-    "bg-[radial-gradient(circle_at_top_left,rgba(244,195,117,0.28),transparent_34%),linear-gradient(135deg,rgba(36,49,89,0.98),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_34%),linear-gradient(135deg,rgba(30,30,35,0.98),rgba(8,8,10,0.98))]",
   "glass-horizon":
-    "bg-[radial-gradient(circle_at_10%_20%,rgba(177,200,255,0.22),transparent_32%),linear-gradient(135deg,rgba(23,36,68,0.98),rgba(7,10,20,0.98))]",
+    "bg-[radial-gradient(circle_at_10%_20%,rgba(255,255,255,0.12),transparent_32%),linear-gradient(135deg,rgba(26,26,32,0.98),rgba(8,8,10,0.98))]",
   "echoes-for-avalon":
-    "bg-[radial-gradient(circle_at_85%_8%,rgba(244,195,117,0.28),transparent_34%),linear-gradient(135deg,rgba(40,32,66,0.98),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_85%_8%,rgba(255,255,255,0.14),transparent_34%),linear-gradient(135deg,rgba(34,34,38,0.98),rgba(9,9,11,0.98))]",
   "static-bloom":
-    "bg-[radial-gradient(circle_at_15%_15%,rgba(255,184,184,0.16),transparent_36%),linear-gradient(135deg,rgba(56,28,39,0.98),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_15%_15%,rgba(255,255,255,0.1),transparent_36%),linear-gradient(135deg,rgba(29,29,34,0.98),rgba(8,8,10,0.98))]",
   "orchard-of-zero":
-    "bg-[radial-gradient(circle_at_top_left,rgba(244,195,117,0.26),transparent_32%),linear-gradient(135deg,rgba(51,46,75,0.98),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_32%),linear-gradient(135deg,rgba(35,35,40,0.98),rgba(9,9,11,0.98))]",
   "salt-atlas":
-    "bg-[radial-gradient(circle_at_85%_10%,rgba(255,222,160,0.22),transparent_32%),linear-gradient(135deg,rgba(44,54,77,0.98),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_85%_10%,rgba(255,255,255,0.12),transparent_32%),linear-gradient(135deg,rgba(32,32,37,0.98),rgba(9,9,11,0.98))]",
   "the-quiet-machine":
-    "bg-[radial-gradient(circle_at_18%_18%,rgba(174,187,255,0.2),transparent_32%),linear-gradient(135deg,rgba(20,28,52,0.98),rgba(7,10,20,0.98))]",
+    "bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.12),transparent_32%),linear-gradient(135deg,rgba(24,24,29,0.98),rgba(8,8,10,0.98))]",
 };
 
 const filmCardThemes: Record<string, string> = {
   "afterlight-valley":
-    "bg-[radial-gradient(circle_at_top,rgba(255,214,153,0.3),transparent_58%),linear-gradient(135deg,rgba(39,52,89,0.96),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),transparent_58%),linear-gradient(135deg,rgba(32,32,37,0.96),rgba(8,8,10,0.98))]",
   "glass-horizon":
-    "bg-[radial-gradient(circle_at_top,rgba(174,187,255,0.2),transparent_56%),linear-gradient(135deg,rgba(23,36,68,0.96),rgba(7,10,20,0.98))]",
+    "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_56%),linear-gradient(135deg,rgba(27,27,32,0.96),rgba(8,8,10,0.98))]",
   "echoes-for-avalon":
-    "bg-[radial-gradient(circle_at_top,rgba(244,195,117,0.24),transparent_58%),linear-gradient(135deg,rgba(40,32,66,0.96),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.12),transparent_58%),linear-gradient(135deg,rgba(33,33,38,0.96),rgba(9,9,11,0.98))]",
   "static-bloom":
-    "bg-[radial-gradient(circle_at_top,rgba(255,184,184,0.16),transparent_52%),linear-gradient(135deg,rgba(56,28,39,0.96),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_52%),linear-gradient(135deg,rgba(30,30,34,0.96),rgba(8,8,10,0.98))]",
   "orchard-of-zero":
-    "bg-[radial-gradient(circle_at_top,rgba(244,195,117,0.18),transparent_58%),linear-gradient(135deg,rgba(51,46,75,0.96),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_58%),linear-gradient(135deg,rgba(34,34,39,0.96),rgba(9,9,11,0.98))]",
   "salt-atlas":
-    "bg-[radial-gradient(circle_at_top,rgba(255,222,160,0.16),transparent_58%),linear-gradient(135deg,rgba(44,54,77,0.96),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_58%),linear-gradient(135deg,rgba(31,31,36,0.96),rgba(9,9,11,0.98))]",
   "the-quiet-machine":
-    "bg-[radial-gradient(circle_at_top,rgba(174,187,255,0.16),transparent_56%),linear-gradient(135deg,rgba(20,28,52,0.96),rgba(7,10,20,0.98))]",
+    "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_56%),linear-gradient(135deg,rgba(25,25,30,0.96),rgba(8,8,10,0.98))]",
 };
 
 const collectionThemes: Record<string, string> = {
   "festival-contenders":
-    "bg-[radial-gradient(circle_at_top_left,rgba(244,195,117,0.18),transparent_34%),linear-gradient(135deg,rgba(28,33,51,0.98),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.1),transparent_34%),linear-gradient(135deg,rgba(28,28,33,0.98),rgba(9,9,11,0.98))]",
   "midnight-surrealism":
-    "bg-[radial-gradient(circle_at_84%_10%,rgba(174,187,255,0.18),transparent_30%),linear-gradient(135deg,rgba(24,28,48,0.98),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_84%_10%,rgba(255,255,255,0.08),transparent_30%),linear-gradient(135deg,rgba(24,24,29,0.98),rgba(9,9,11,0.98))]",
   "first-100":
-    "bg-[radial-gradient(circle_at_10%_12%,rgba(244,195,117,0.18),transparent_34%),linear-gradient(135deg,rgba(46,39,59,0.98),rgba(9,12,22,0.98))]",
+    "bg-[radial-gradient(circle_at_10%_12%,rgba(255,255,255,0.08),transparent_34%),linear-gradient(135deg,rgba(30,30,35,0.98),rgba(9,9,11,0.98))]",
 };
 
 const filmCredits: Record<string, { role: string; name: string }[]> = {
@@ -188,6 +198,28 @@ export const homePrinciples = [
   "Editorial taste with scalable ranking underneath",
 ];
 
+function extractYouTubeVideoId(url: string) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes("youtu.be")) {
+      return parsed.pathname.replace("/", "") || null;
+    }
+
+    if (parsed.hostname.includes("youtube.com")) {
+      return parsed.searchParams.get("v");
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+export function buildYouTubeThumbnailUrl(url: string) {
+  const id = extractYouTubeVideoId(url);
+  return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : "";
+}
+
 function formatCompactNumber(value: number) {
   return new Intl.NumberFormat("en-US", {
     notation: "compact",
@@ -197,8 +229,16 @@ function formatCompactNumber(value: number) {
     .toLowerCase();
 }
 
+function firstRelation<T>(value: T | T[] | null | undefined) {
+  if (Array.isArray(value)) {
+    return value[0] ?? null;
+  }
+
+  return value ?? null;
+}
+
 function mapFilm(row: FilmRow, collectionSlugs: string[] = []): Film {
-  const creator = row.creators?.[0];
+  const creator = firstRelation(row.creators);
 
   return {
     id: row.id,
@@ -223,6 +263,9 @@ function mapFilm(row: FilmRow, collectionSlugs: string[] = []): Film {
     featuredWeight: row.featured_weight,
     publishedAt: row.published_at,
     youtubeUrl: row.youtube_url,
+    thumbnailUrl: buildYouTubeThumbnailUrl(row.youtube_url),
+    visibility: row.visibility,
+    availabilityNote: row.availability_note,
     heroClassName: filmHeroThemes[row.slug] ?? filmHeroThemes["afterlight-valley"],
     cardClassName: filmCardThemes[row.slug] ?? filmCardThemes["afterlight-valley"],
     collectionSlugs,
@@ -257,7 +300,7 @@ async function getPublicFilmRows() {
   const { data, error } = await supabase
     .from("films")
     .select(
-      "id, serial_number, slug, title, logline, synopsis, youtube_url, runtime_minutes, release_year, format, genre, mood, tools, languages, featured_weight, discussion_count, views_count, saves_count, published_at, creators (slug, name)",
+      "id, serial_number, slug, title, logline, synopsis, youtube_url, runtime_minutes, release_year, format, genre, mood, tools, languages, featured_weight, discussion_count, views_count, saves_count, published_at, visibility, availability_note, creators (slug, name)",
     )
     .in("visibility", ["public", "limited"]);
 
@@ -320,13 +363,34 @@ export async function getTrendingFilms(limit = 4) {
 }
 
 export async function getFilmByIdentifier(identifier: string) {
-  const films = await getMappedFilms();
   const serial = Number.parseInt(identifier.split("-")[0] ?? identifier, 10);
+  const films = await getMappedFilms();
+
   if (!Number.isNaN(serial)) {
-    return films.find((film) => film.serial === serial) ?? null;
+    const serialMatch = films.find((film) => film.serial === serial) ?? null;
+    if (serialMatch) {
+      return serialMatch;
+    }
+  } else {
+    const slugMatch = films.find((film) => film.slug === identifier) ?? null;
+    if (slugMatch) {
+      return slugMatch;
+    }
   }
 
-  return films.find((film) => film.slug === identifier) ?? null;
+  const supabase = createSupabaseAdminClient();
+  const select =
+    "id, serial_number, slug, title, logline, synopsis, youtube_url, runtime_minutes, release_year, format, genre, mood, tools, languages, featured_weight, discussion_count, views_count, saves_count, published_at, visibility, availability_note, creators (slug, name)";
+  const query = supabase.from("films").select(select).eq("visibility", "removed").limit(1);
+  const { data, error } = !Number.isNaN(serial)
+    ? await query.eq("serial_number", serial).maybeSingle()
+    : await query.eq("slug", identifier).maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to load film: ${error.message}`);
+  }
+
+  return data ? mapFilm(data as FilmRow) : null;
 }
 
 export async function getFilmsForCreator(creatorSlug: string) {

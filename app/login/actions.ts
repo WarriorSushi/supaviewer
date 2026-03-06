@@ -3,9 +3,13 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+function normalizeNextPath(nextPath: string) {
+  return nextPath.trim() || "/";
+}
+
 export async function sendMagicLink(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
-  const nextPath = String(formData.get("next") ?? "/").trim() || "/";
+  const nextPath = normalizeNextPath(String(formData.get("next") ?? "/"));
 
   if (!email) {
     redirect(`/login?error=missing-email&next=${encodeURIComponent(nextPath)}`);
@@ -26,6 +30,50 @@ export async function sendMagicLink(formData: FormData) {
   }
 
   redirect(`/login?sent=1&next=${encodeURIComponent(nextPath)}`);
+}
+
+export async function signInWithPassword(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const nextPath = normalizeNextPath(String(formData.get("next") ?? "/"));
+
+  if (!email || !password) {
+    redirect(`/login?error=password-missing-fields&next=${encodeURIComponent(nextPath)}`);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    redirect(`/login?error=password-login-failed&next=${encodeURIComponent(nextPath)}`);
+  }
+
+  redirect(nextPath);
+}
+
+export async function signUpWithPassword(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const nextPath = normalizeNextPath(String(formData.get("next") ?? "/"));
+
+  if (!email || !password) {
+    redirect(`/login?error=signup-missing-fields&next=${encodeURIComponent(nextPath)}`);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+
+  if (error) {
+    redirect(`/login?error=signup-failed&next=${encodeURIComponent(nextPath)}`);
+  }
+
+  redirect(`/login?signup=1&next=${encodeURIComponent(nextPath)}`);
 }
 
 export async function signOut() {

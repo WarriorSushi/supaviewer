@@ -1,25 +1,28 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, IBM_Plex_Mono, Manrope } from "next/font/google";
+import { Fraunces, IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { MobileNav } from "@/components/mobile-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["500", "600"],
+  display: "swap",
 });
 
 const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-ibm-plex-mono",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -36,9 +39,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${manrope.variable} ${cormorant.variable} ${ibmPlexMono.variable} antialiased`}
+        className={`${plusJakartaSans.variable} ${fraunces.variable} ${ibmPlexMono.variable} antialiased`}
       >
-        <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(248,194,112,0.12),transparent_28%),radial-gradient(circle_at_80%_10%,rgba(84,101,160,0.16),transparent_24%),linear-gradient(180deg,rgba(8,10,16,0),rgba(8,10,16,0.4)_48%,rgba(8,10,16,0.95))]" />
+        <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.06),transparent_22%),radial-gradient(circle_at_85%_0%,rgba(255,255,255,0.04),transparent_16%),radial-gradient(circle_at_50%_120%,rgba(20,20,24,0.34),transparent_38%),linear-gradient(180deg,rgba(6,6,8,0),rgba(6,6,8,0.62)_48%,rgba(6,6,8,0.98))]" />
         <div className="relative min-h-screen">
           <SiteHeader />
           {children}

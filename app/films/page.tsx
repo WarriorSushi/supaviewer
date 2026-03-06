@@ -19,24 +19,23 @@ export default async function FilmsPage({ searchParams }: FilmsPageProps) {
   ]);
 
   return (
-    <main className="mx-auto w-full max-w-[92rem] px-4 pb-28 pt-6 sm:px-6 lg:px-10">
-      <section className="rounded-[2.25rem] border border-white/10 bg-[linear-gradient(135deg,rgba(244,195,117,0.12),rgba(255,255,255,0.03)_34%,rgba(8,10,16,0.92)_74%)] p-6 sm:p-8">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/44">Catalog</p>
-        <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <main className="mx-auto w-full max-w-[110rem] px-4 pb-28 pt-8 sm:px-6 lg:px-10">
+      <section className="sv-surface rounded-[1.2rem] p-6 sm:p-7">
+        <div className="sv-section-head">
           <div>
-            <h1 className="font-display text-5xl text-white sm:text-6xl">Browse films</h1>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-white/66">
-              Search the catalog by title, creator, or serial number. Every accepted title keeps its
-              permanent place in the library.
+            <p className="sv-overline">Catalog</p>
+            <h1 className="mt-2 text-[2.2rem] font-semibold tracking-[-0.06em] text-white sm:text-[3rem]">
+              Browse films
+            </h1>
+            <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-white/62">
+              Search by title, creator, or serial number. The artwork leads; metadata stays quiet.
             </p>
           </div>
-          <div className="rounded-full border border-white/10 bg-white/6 px-4 py-2 text-sm text-white/62">
-            {filteredFilms.length} films
-          </div>
+          <div className="sv-chip">{filteredFilms.length} films</div>
         </div>
       </section>
 
-      <section className="py-6">
+      <section className="py-8">
         <CatalogSearchForm
           format={params.format}
           formats={filterOptions.formats}
@@ -47,7 +46,7 @@ export default async function FilmsPage({ searchParams }: FilmsPageProps) {
         />
       </section>
 
-      <section className="grid gap-4 pb-8 md:grid-cols-2 xl:grid-cols-3">
+      <section className="grid gap-5 pb-8 sm:grid-cols-2 xl:grid-cols-4">
         {filteredFilms.map((film) => (
           <FilmCard key={film.serial} film={film} />
         ))}

@@ -16,13 +16,13 @@ export function CatalogSearchForm({
   formats,
 }: CatalogSearchFormProps) {
   return (
-    <form className="grid gap-4 rounded-[2rem] border border-white/10 bg-white/[0.03] p-5 lg:grid-cols-[minmax(0,1.6fr)_repeat(2,minmax(0,0.7fr))_auto]">
+    <form className="sv-surface grid gap-4 rounded-[1rem] p-4 lg:grid-cols-[minmax(0,1.75fr)_repeat(3,minmax(0,0.82fr))_11rem]">
       <label className="block">
-        <span className="mb-2 block text-xs uppercase tracking-[0.28em] text-white/42">
+        <span className="mb-2 block text-[0.62rem] uppercase tracking-[0.22em] text-white/38">
           Search
         </span>
         <input
-          className="w-full rounded-[1.2rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[var(--color-highlight)]/40"
+          className="sv-input"
           defaultValue={q}
           name="q"
           placeholder="Title, creator, or #serial"
@@ -30,11 +30,11 @@ export function CatalogSearchForm({
         />
       </label>
       <label className="block">
-        <span className="mb-2 block text-xs uppercase tracking-[0.28em] text-white/42">
+        <span className="mb-2 block text-[0.62rem] uppercase tracking-[0.22em] text-white/38">
           Genre
         </span>
         <select
-          className="w-full rounded-[1.2rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none focus:border-[var(--color-highlight)]/40"
+          className="sv-select"
           defaultValue={genre ?? "all"}
           name="genre"
         >
@@ -46,11 +46,11 @@ export function CatalogSearchForm({
         </select>
       </label>
       <label className="block">
-        <span className="mb-2 block text-xs uppercase tracking-[0.28em] text-white/42">
+        <span className="mb-2 block text-[0.62rem] uppercase tracking-[0.22em] text-white/38">
           Format
         </span>
         <select
-          className="w-full rounded-[1.2rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none focus:border-[var(--color-highlight)]/40"
+          className="sv-select"
           defaultValue={format ?? "all"}
           name="format"
         >
@@ -62,11 +62,11 @@ export function CatalogSearchForm({
         </select>
       </label>
       <label className="block">
-        <span className="mb-2 block text-xs uppercase tracking-[0.28em] text-white/42">
+        <span className="mb-2 block text-[0.62rem] uppercase tracking-[0.22em] text-white/38">
           Sort
         </span>
         <select
-          className="w-full rounded-[1.2rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none focus:border-[var(--color-highlight)]/40"
+          className="sv-select"
           defaultValue={sort ?? "featured"}
           name="sort"
         >
@@ -77,7 +77,7 @@ export function CatalogSearchForm({
         </select>
       </label>
       <div className="flex items-end">
-        <button className="h-[50px] rounded-full bg-[var(--color-highlight)] px-5 text-sm font-semibold text-[var(--color-bg)] transition hover:brightness-105">
+        <button className="sv-btn sv-btn-primary h-[46px] w-full">
           Apply
         </button>
       </div>

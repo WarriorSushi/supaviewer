@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { addFilmComment, toggleFilmLike, toggleFilmSave } from "@/app/actions/social";
-import { FilmCard } from "@/components/film-card";
+import { BookmarkIcon, HeartIcon, ShareIcon } from "@/components/icons";
+import { RelatedFilmListItem } from "@/components/related-film-list-item";
 import { SerialPill } from "@/components/serial-pill";
 import { getCurrentSessionProfile } from "@/lib/auth";
 import {
@@ -51,227 +52,208 @@ export default async function FilmDetailPage({ params, searchParams }: FilmDetai
 
   const [creator, trendingFilms, socialState, session] = await Promise.all([
     getCreatorBySlug(film.creatorSlug),
-    getTrendingFilms(),
+    getTrendingFilms(8),
     getFilmSocialState(film.id),
     getCurrentSessionProfile(),
   ]);
-  const relatedFilms = trendingFilms.filter((entry) => entry.id !== film.id).slice(0, 3);
+
+  const relatedFilms = trendingFilms.filter((entry) => entry.id !== film.id).slice(0, 6);
   const commentError = query.commentError ? commentErrors[query.commentError] : null;
   const filmPath = `/films/${identifier}`;
   const embedUrl = getYouTubeEmbedUrl(film.youtubeUrl);
+  const isRemoved = film.visibility === "removed";
 
-  return (
-    <main className="mx-auto w-full max-w-[92rem] px-4 pb-28 pt-6 sm:px-6 lg:px-10">
-      <section
-        className={`overflow-hidden rounded-[2.25rem] border border-white/10 p-6 sm:p-8 ${film.heroClassName}`}
-      >
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,0.8fr)]">
-          <div>
+  if (isRemoved) {
+    return (
+      <main className="mx-auto w-full max-w-[110rem] px-4 pb-28 pt-8 sm:px-6 lg:px-10">
+        <section className="sv-surface rounded-[1.2rem] p-8">
+          <div className="max-w-4xl">
             <div className="flex flex-wrap items-center gap-3">
               <SerialPill large serial={film.serial} />
-              <span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.28em] text-white/56">
-                {film.format}
-              </span>
-              <span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.28em] text-white/56">
-                {film.runtimeMinutes} min
-              </span>
+              <span className="sv-chip">Unavailable</span>
             </div>
-            <h1 className="mt-5 font-display text-5xl leading-[0.92] text-white sm:text-6xl">
+            <h1 className="mt-5 text-4xl font-semibold tracking-[-0.05em] text-white sm:text-5xl">
               {film.title}
             </h1>
-            <p className="mt-5 max-w-3xl text-base leading-7 text-white/72 sm:text-lg">
-              {film.synopsis}
+            <p className="mt-4 max-w-2xl text-[0.96rem] leading-7 text-white/64">
+              This serial remains part of the catalog history, but the film is no longer available to watch.
             </p>
-            <div className="mt-6 flex flex-wrap gap-3 text-sm text-white/64">
-              <span>{film.genre}</span>
-              <span className="text-white/24">/</span>
-              <span>{film.mood}</span>
-              <span className="text-white/24">/</span>
-              <span>{film.releaseYear}</span>
-            </div>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                className="rounded-full bg-[var(--color-highlight)] px-6 py-3 text-sm font-semibold text-[var(--color-bg)] transition hover:brightness-105"
-                href={film.youtubeUrl}
-              >
-                Open YouTube source
-              </a>
-              <form action={toggleFilmLike.bind(null, film.id, filmPath)}>
-                <button className="rounded-full border border-white/12 bg-white/6 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/26 hover:bg-white/10">
-                  {socialState.liked ? "Liked" : "Like"}
-                </button>
-              </form>
-              <form action={toggleFilmSave.bind(null, film.id, filmPath)}>
-                <button className="rounded-full border border-white/12 bg-white/6 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/26 hover:bg-white/10">
-                  {socialState.saved ? "Saved" : "Save"}
-                </button>
-              </form>
-              <Link
-                className="rounded-full border border-white/12 bg-white/6 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/26 hover:bg-white/10"
-                href="/films"
-              >
-                Back to films
-              </Link>
-            </div>
+            {film.availabilityNote ? (
+              <div className="sv-surface-soft mt-5 rounded-[0.95rem] px-4 py-4 text-sm leading-6 text-white/68">
+                {film.availabilityNote}
+              </div>
+            ) : null}
           </div>
-          <div className="rounded-[2rem] border border-white/10 bg-black/20 p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/42">Watch</p>
-            <div className="mt-4 overflow-hidden rounded-[1.6rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(7,10,18,0.92))]">
-              <div className="flex items-center justify-between border-b border-white/8 px-5 py-4 text-xs uppercase tracking-[0.24em] text-white/42">
-                <span>Embedded from YouTube</span>
-                <span>#{film.serial}</span>
-              </div>
-              <div className="aspect-video bg-black">
-                {embedUrl ? (
-                  <iframe
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    className="h-full w-full"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    src={embedUrl}
-                    title={film.title}
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-white/54">
-                    Player unavailable for this source URL.
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center justify-between px-5 py-4 text-sm text-white/56">
-                <span>{film.views} views</span>
-                <span>{film.saves} saves</span>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-3 text-center text-sm">
-              <div className="rounded-[1.4rem] border border-white/10 bg-white/4 px-3 py-4">
-                <p className="font-mono text-[var(--color-highlight)]">{film.views}</p>
-                <p className="mt-1 text-white/48">views</p>
-              </div>
-              <div className="rounded-[1.4rem] border border-white/10 bg-white/4 px-3 py-4">
-                <p className="font-mono text-[var(--color-highlight)]">{film.saves}</p>
-                <p className="mt-1 text-white/48">saves</p>
-              </div>
-              <div className="rounded-[1.4rem] border border-white/10 bg-white/4 px-3 py-4">
-                <p className="font-mono text-[var(--color-highlight)]">{socialState.commentsCount}</p>
-                <p className="mt-1 text-white/48">comments</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      </main>
+    );
+  }
 
-      <section className="grid gap-4 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.85fr)]">
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-6">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/42">Credits</p>
-          <div className="mt-4 grid gap-3">
-            {film.credits.map((credit) => (
-              <div
-                key={`${credit.role}-${credit.name}`}
-                className="flex items-center justify-between rounded-[1.35rem] border border-white/10 bg-white/4 px-4 py-4 text-sm text-white/72"
-              >
-                <span className="text-white/48">{credit.role}</span>
-                <span>{credit.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-6">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/42">Details</p>
-          <div className="mt-4 grid gap-3 text-sm text-white/72">
-            <div className="flex items-center justify-between rounded-[1.35rem] border border-white/10 bg-white/4 px-4 py-4">
-              <span className="text-white/48">Director</span>
-              {creator ? (
-                <Link className="transition hover:text-white" href={buildCreatorHref(creator)}>
-                  {creator.name}
-                </Link>
+  return (
+    <main className="mx-auto w-full max-w-[110rem] px-4 pb-28 pt-8 sm:px-6 lg:px-10">
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_23rem]">
+        <div className="grid gap-5">
+          <div className="overflow-hidden rounded-[1.2rem] border border-white/8 bg-black shadow-[0_28px_90px_rgba(0,0,0,0.34)]">
+            <div className="aspect-video bg-black">
+              {embedUrl ? (
+                <iframe
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="h-full w-full"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  src={embedUrl}
+                  title={film.title}
+                />
               ) : (
-                <span>{film.creatorName}</span>
+                <div className="flex h-full items-center justify-center text-sm text-white/54">
+                  Player unavailable for this source URL.
+                </div>
               )}
             </div>
-            <div className="flex items-center justify-between rounded-[1.35rem] border border-white/10 bg-white/4 px-4 py-4">
-              <span className="text-white/48">Languages</span>
-              <span>{film.languages.join(", ")}</span>
-            </div>
-            <div className="flex items-center justify-between rounded-[1.35rem] border border-white/10 bg-white/4 px-4 py-4">
-              <span className="text-white/48">Tools</span>
-              <span>{film.tools.join(", ")}</span>
-            </div>
           </div>
-        </div>
-      </section>
 
-      <section id="comments" className="grid gap-4 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,0.9fr)]">
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-6">
-          <div className="mb-5 flex items-end justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/42">Discussion</p>
-              <h2 className="mt-2 font-display text-4xl text-white">Audience notes</h2>
+          <div className="sv-surface rounded-[1.2rem] p-5 sm:p-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <SerialPill serial={film.serial} />
+              <span className="sv-chip">{film.format}</span>
             </div>
-            <div className="rounded-full border border-white/10 bg-white/6 px-4 py-2 text-sm text-white/62">
-              {socialState.commentsCount} comments
+
+            <h1 className="mt-4 text-[1.6rem] font-semibold tracking-[-0.05em] text-white sm:text-[2.1rem]">
+              {film.title}
+            </h1>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-[0.76rem] uppercase tracking-[0.14em] text-white/42">
+              <span>{film.creatorName}</span>
+              <span>/</span>
+              <span>{film.genre}</span>
+              <span>/</span>
+              <span>{film.releaseYear}</span>
+              <span>/</span>
+              <span>{film.runtimeMinutes} min</span>
             </div>
-          </div>
-          <div className="grid gap-3">
-            {socialState.comments.length ? (
-              socialState.comments.map((comment) => (
-                <article
-                  key={comment.id}
-                  className="rounded-[1.5rem] border border-white/10 bg-white/4 px-4 py-4"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm font-semibold text-white">{comment.author}</p>
-                    <p className="text-xs uppercase tracking-[0.24em] text-white/36">
-                      {new Date(comment.createdAt).toLocaleDateString("en-US")}
-                    </p>
-                  </div>
-                  <p className="mt-3 text-sm leading-6 text-white/70">{comment.body}</p>
-                </article>
-              ))
-            ) : (
-              <div className="rounded-[1.5rem] border border-white/10 bg-white/4 px-4 py-5 text-sm text-white/60">
-                No comments yet. Be the first to leave a thoughtful note.
+
+            <div className="mt-6 flex flex-col gap-4 border-t border-white/8 pt-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[0.95rem] border border-white/10 bg-white/5 text-sm font-semibold text-white">
+                  {film.creatorName.slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  {creator ? (
+                    <Link className="text-sm font-medium text-white transition hover:text-white/84" href={buildCreatorHref(creator)}>
+                      {creator.name}
+                    </Link>
+                  ) : (
+                    <p className="text-sm font-medium text-white">{film.creatorName}</p>
+                  )}
+                  <p className="mt-1 text-[0.74rem] uppercase tracking-[0.12em] text-white/38">
+                    {film.views} views / {film.saves} saves
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-6">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/42">Add a comment</p>
-          {!session.profile ? (
-            <div className="mt-4 rounded-[1.4rem] border border-white/10 bg-white/6 px-4 py-4 text-sm text-white/72">
-              Sign in to comment, like, and save films.
-            </div>
-          ) : null}
-          {commentError ? (
-            <div className="mt-4 rounded-[1.4rem] border border-rose-400/20 bg-rose-400/10 px-4 py-4 text-sm text-rose-100">
-              {commentError}
-            </div>
-          ) : null}
-          <form action={addFilmComment.bind(null, film.id, filmPath)} className="mt-6 grid gap-4">
-            <textarea
-              className="min-h-36 w-full rounded-[1.2rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[var(--color-highlight)]/40"
-              name="body"
-              placeholder="Write what stood out: pacing, visual language, sound, worldbuilding."
-            />
-            <button
-              className="rounded-full bg-[var(--color-highlight)] px-6 py-3 text-sm font-semibold text-[var(--color-bg)] transition hover:brightness-105"
-              disabled={!session.profile}
-            >
-              Post comment
-            </button>
-          </form>
-        </div>
-      </section>
 
-      <section className="py-6">
-        <div className="mb-5">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/42">Related films</p>
-          <h2 className="mt-2 font-display text-4xl text-white">Keep watching</h2>
+              <div className="flex flex-wrap gap-2">
+                <form action={toggleFilmLike.bind(null, film.id, filmPath)}>
+                  <button aria-pressed={socialState.liked} className="sv-icon-btn" data-active={socialState.liked ? "true" : "false"}>
+                    <HeartIcon className="h-4 w-4" />
+                    {session.profile ? (socialState.liked ? "Liked" : "Like") : "Like"}
+                  </button>
+                </form>
+                <form action={toggleFilmSave.bind(null, film.id, filmPath)}>
+                  <button aria-pressed={socialState.saved} className="sv-icon-btn" data-active={socialState.saved ? "true" : "false"}>
+                    <BookmarkIcon className="h-4 w-4" />
+                    {session.profile ? (socialState.saved ? "Saved" : "Save") : "Save"}
+                  </button>
+                </form>
+                <a className="sv-icon-btn" href={film.youtubeUrl}>
+                  <ShareIcon className="h-4 w-4" />
+                  Source
+                </a>
+              </div>
+            </div>
+
+            <p className="mt-6 max-w-4xl text-[0.95rem] leading-7 text-white/66">{film.synopsis}</p>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              {film.languages.map((language) => (
+                <span key={language} className="sv-chip">
+                  {language}
+                </span>
+              ))}
+              {film.tools.map((tool) => (
+                <span key={tool} className="sv-chip">
+                  {tool}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <section id="comments" className="sv-surface rounded-[1.2rem] p-5 sm:p-6">
+            <div className="sv-section-head">
+              <div>
+                <p className="sv-overline">Discussion</p>
+                <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-white">Viewer comments</h2>
+              </div>
+              <div className="text-sm text-white/42">{socialState.commentsCount} comments</div>
+            </div>
+
+            {!session.profile ? (
+              <div className="sv-surface-soft mt-5 rounded-[0.95rem] px-4 py-4 text-sm text-white/68">
+                Sign in to comment, like, and save films.
+              </div>
+            ) : null}
+            {commentError ? (
+              <div className="mt-5 rounded-[0.95rem] border border-rose-400/20 bg-rose-400/10 px-4 py-4 text-sm text-rose-100">
+                {commentError}
+              </div>
+            ) : null}
+
+            <form action={addFilmComment.bind(null, film.id, filmPath)} className="mt-5 grid gap-3">
+              <textarea className="sv-textarea" name="body" placeholder="Add a comment" />
+              <div className="flex justify-end">
+                <button className="sv-btn sv-btn-primary" disabled={!session.profile}>
+                  Comment
+                </button>
+              </div>
+            </form>
+
+            <div className="mt-5 grid gap-3">
+              {socialState.comments.length ? (
+                socialState.comments.map((comment) => (
+                  <article key={comment.id} className="sv-surface-soft rounded-[0.95rem] px-4 py-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-[0.82rem] font-medium text-white">{comment.author}</p>
+                      <p className="text-[0.66rem] uppercase tracking-[0.18em] text-white/34">
+                        {new Date(comment.createdAt).toLocaleDateString("en-US")}
+                      </p>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-white/68">{comment.body}</p>
+                  </article>
+                ))
+              ) : (
+                <div className="sv-surface-soft rounded-[0.95rem] px-4 py-5 text-sm text-white/56">
+                  No comments yet.
+                </div>
+              )}
+            </div>
+          </section>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {relatedFilms.map((relatedFilm) => (
-            <FilmCard key={relatedFilm.serial} film={relatedFilm} emphasis="compact" />
-          ))}
-        </div>
+
+        <aside className="sv-surface rounded-[1.2rem] p-4">
+          <div className="sv-section-head">
+            <div>
+              <p className="sv-overline">Up next</p>
+              <h2 className="mt-2 text-lg font-medium text-white">Related films</h2>
+            </div>
+            <Link className="text-sm text-white/52 transition hover:text-white" href="/films">
+              Browse
+            </Link>
+          </div>
+          <div className="mt-3 grid gap-1">
+            {relatedFilms.map((relatedFilm) => (
+              <RelatedFilmListItem key={relatedFilm.serial} film={relatedFilm} />
+            ))}
+          </div>
+        </aside>
       </section>
     </main>
   );

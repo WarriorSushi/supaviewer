@@ -4,6 +4,7 @@ export type SessionProfile = {
   id: string;
   email: string | null;
   displayName: string;
+  bio: string | null;
   role: "viewer" | "admin";
 };
 
@@ -19,7 +20,7 @@ export async function getCurrentSessionProfile() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, email, display_name, role")
+    .select("id, email, display_name, bio, role")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -30,6 +31,7 @@ export async function getCurrentSessionProfile() {
           id: profile.id,
           email: profile.email,
           displayName: profile.display_name,
+          bio: profile.bio,
           role: profile.role,
         } satisfies SessionProfile)
       : null,

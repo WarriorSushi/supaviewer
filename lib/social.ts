@@ -1,6 +1,14 @@
 import { getCurrentSessionProfile } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+function firstRelation<T>(value: T | T[] | null | undefined) {
+  if (Array.isArray(value)) {
+    return value[0] ?? null;
+  }
+
+  return value ?? null;
+}
+
 export async function getFilmSocialState(filmId: string) {
   const supabase = await createSupabaseServerClient();
   const { profile } = await getCurrentSessionProfile();
@@ -41,7 +49,8 @@ export async function getFilmSocialState(filmId: string) {
     body: comment.body as string,
     createdAt: comment.created_at as string,
     author:
-      ((comment.profiles as { display_name?: string }[] | null)?.[0])?.display_name ?? "viewer",
+      firstRelation(comment.profiles as { display_name?: string } | { display_name?: string }[] | null)?.display_name ??
+      "viewer",
   }));
 
   return {
