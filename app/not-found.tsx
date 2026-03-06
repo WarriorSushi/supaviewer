@@ -9,7 +9,7 @@ export default function NotFound() {
         The page you asked for does not exist or the title has been removed from public view.
       </p>
       <Link
-        className="mt-8 rounded-full bg-[var(--color-highlight)] px-6 py-3 text-sm font-semibold text-[var(--color-bg)]"
+        className="sv-btn sv-btn-primary mt-8"
         href="/films"
       >
         Browse films
