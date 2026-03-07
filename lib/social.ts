@@ -1,3 +1,4 @@
+import { getFilmAgentState } from "@/lib/agents";
 import { getCurrentSessionProfile } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -9,21 +10,27 @@ function firstRelation<T>(value: T | T[] | null | undefined) {
   return value ?? null;
 }
 
-export async function getFilmSocialState(filmId: string) {
+export async function getFilmSocialState(filmId: string, creatorId?: string | null) {
   const supabase = await createSupabaseServerClient();
   const { profile } = await getCurrentSessionProfile();
 
   const [
-    { count: commentsCount },
+    { count: humanCommentsCount },
     { data: commentsData },
     likedResult,
     savedResult,
+    agentState,
   ] = await Promise.all([
-    supabase.from("comments").select("*", { count: "exact", head: true }).eq("film_id", filmId),
+    supabase
+      .from("comments")
+      .select("*", { count: "exact", head: true })
+      .eq("film_id", filmId)
+      .eq("author_type", "human"),
     supabase
       .from("comments")
       .select("id, body, created_at, profiles (display_name)")
       .eq("film_id", filmId)
+      .eq("author_type", "human")
       .order("created_at", { ascending: false })
       .limit(12),
     profile
@@ -42,6 +49,7 @@ export async function getFilmSocialState(filmId: string) {
           .eq("profile_id", profile.id)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    getFilmAgentState(filmId, creatorId),
   ]);
 
   const comments = (commentsData ?? []).map((comment) => ({
@@ -54,8 +62,13 @@ export async function getFilmSocialState(filmId: string) {
   }));
 
   return {
-    commentsCount: commentsCount ?? comments.length,
+    commentsCount: humanCommentsCount ?? comments.length,
     comments,
+    agentCommentsCount: agentState.agentComments.length,
+    agentComments: agentState.agentComments,
+    agentReactionCount: agentState.reactionCount,
+    agentsWatching: agentState.agentsWatching,
+    officialAgents: agentState.officialAgents,
     liked: Boolean(likedResult.data),
     saved: Boolean(savedResult.data),
   };

@@ -1,13 +1,24 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   createCreatorProfile,
+  submitAgentDraftSubmission,
   updateCreatorProfile,
   updateViewerProfile,
 } from "@/app/studio/actions";
+import { ShareButton } from "@/components/share-button";
+import { StudioAgentPanel } from "@/components/studio-agent-panel";
+import { StudioWatchEventsPanel } from "@/components/studio-watch-events-panel";
+import { StatusPill } from "@/components/status-pill";
+import { TrophyStrip } from "@/components/trophy-strip";
+import { getOwnedAgents } from "@/lib/agents";
 import { getCurrentSessionProfile } from "@/lib/auth";
-import { getCreators } from "@/lib/catalog";
+import { getCreatorStudioAnalytics } from "@/lib/creator-analytics";
+import { buildCreatorHref, getCreators } from "@/lib/catalog";
+import { getSubmissionRejectionReasonLabel } from "@/lib/submissions";
 import { getViewerLibrary } from "@/lib/viewer";
+import { getCreatorWatchEventStudioData } from "@/lib/watch-events";
 
 type StudioPageProps = {
   searchParams: Promise<{
@@ -15,7 +26,17 @@ type StudioPageProps = {
     error?: string;
     profile?: string;
     creator?: string;
+    submission?: string;
+    watchEvent?: string;
   }>;
+};
+
+export const metadata: Metadata = {
+  title: "Studio",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 const studioErrors: Record<string, string> = {
@@ -26,6 +47,13 @@ const studioErrors: Record<string, string> = {
   "creator-missing-fields": "Complete all creator profile fields before saving.",
   "creator-not-found": "No owned creator profile was found for this account.",
   "creator-update-failed": "The creator profile could not be updated.",
+  "submit-failed": "That draft could not be sent to moderation.",
+  "watch-event-invalid": "Complete the launch-party form with a title, film, notes, and valid start time.",
+  "watch-event-no-creator": "Create or claim your creator profile before scheduling a launch party.",
+  "watch-event-film": "Pick one of your own accepted films for the lounge.",
+  "watch-event-agent": "The selected official companion agent is not valid for this account.",
+  "watch-event-failed": "That launch party could not be scheduled.",
+  "watch-event-update-failed": "That lounge update could not be saved.",
 };
 
 export default async function StudioPage({ searchParams }: StudioPageProps) {
@@ -36,34 +64,61 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
   }
 
   const params = await searchParams;
-  const [creators, library] = await Promise.all([getCreators(), getViewerLibrary()]);
+  const [creators, library, ownedAgents] = await Promise.all([
+    getCreators(),
+    getViewerLibrary(),
+    getOwnedAgents(profile.id),
+  ]);
   const ownedCreator = creators.find((creator) => creator.ownerProfileId === profile.id) ?? null;
+  const [creatorAnalytics, watchEventStudioData] = await Promise.all([
+    ownedCreator ? getCreatorStudioAnalytics(ownedCreator.id) : Promise.resolve(null),
+    getCreatorWatchEventStudioData(profile.id, ownedCreator?.id ?? null),
+  ]);
   const successMessage =
     params.created === "1"
-      ? "Creator profile created. You can now shape your public identity on Superviewer."
+      ? "Creator profile created. You can now shape your public identity on Supaviewer."
       : params.profile === "updated"
         ? "Viewer profile updated."
         : params.creator === "updated"
           ? "Creator profile updated."
-          : null;
-  const error = params.error ? studioErrors[params.error] : null;
+          : params.submission === "submitted"
+            ? "Agent draft submitted to moderation. It is now in the human review queue."
+            : params.watchEvent === "scheduled"
+              ? "Launch party scheduled. The canonical lounge URL is ready to share."
+              : params.watchEvent === "updated"
+                ? "Launch party updated."
+                : params.watchEvent === "started"
+                  ? "Launch party is live now."
+                  : params.watchEvent === "ended"
+                    ? "Launch party marked ended."
+                    : params.watchEvent === "cancelled"
+                      ? "Launch party cancelled."
+            : null;
+  const error = params.error
+    ? studioErrors[params.error]
+    : params.submission === "submit-failed"
+      ? studioErrors["submit-failed"]
+      : null;
+  const pendingSubmissions = library.submissions.filter((submission) => submission.status === "submitted").length;
+  const acceptedSubmissions = library.submissions.filter((submission) => submission.status === "accepted").length;
+  const claimInReview = library.claims.filter((claim) => claim.status === "pending").length;
 
   return (
     <main className="mx-auto w-full max-w-[100rem] px-4 pb-28 pt-8 sm:px-6 lg:px-10">
-      <section className="rounded-[1rem] border border-white/8 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02)_34%,rgba(10,10,12,0.96)_74%)] p-6 sm:p-8">
-        <p className="text-[0.68rem] uppercase tracking-[0.28em] text-white/44">Creator studio</p>
+      <section className="sv-page-hero rounded-[1rem] p-6 sm:p-8">
+        <p className="sv-overline">Creator studio</p>
         <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-4xl font-semibold tracking-[-0.05em] text-white sm:text-5xl">
+            <h1 className="text-4xl font-semibold tracking-[-0.05em] text-foreground sm:text-5xl">
               Manage your identity and editorial surface.
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-white/68">
+            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
               Keep your viewer profile, creator page, submission history, and watch shelf aligned in
               one place.
             </p>
           </div>
           <Link
-            className="rounded-full border border-white/12 bg-white/5 px-5 py-3 text-sm text-white transition hover:border-white/24 hover:bg-white/10"
+            className="sv-btn sv-btn-secondary"
             href="/library"
           >
             Open library
@@ -81,17 +136,38 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
         ) : null}
       </section>
 
+      <section className="grid gap-4 pt-6 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="sv-surface rounded-[1.2rem] px-5 py-5">
+          <p className="sv-overline">Pending review</p>
+          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{pendingSubmissions}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Submissions waiting on moderation.</p>
+        </div>
+        <div className="sv-surface rounded-[1.2rem] px-5 py-5">
+          <p className="sv-overline">Accepted</p>
+          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{acceptedSubmissions}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Titles already pushed into the catalog.</p>
+        </div>
+        <div className="sv-surface rounded-[1.2rem] px-5 py-5">
+          <p className="sv-overline">Saved shelf</p>
+          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{library.saved.length}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Films you want to revisit or reference.</p>
+        </div>
+        <div className="sv-surface rounded-[1.2rem] px-5 py-5">
+          <p className="sv-overline">Claims in review</p>
+          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{claimInReview}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Creator identity requests awaiting admin review.</p>
+        </div>
+      </section>
+
       <section className="grid gap-6 py-8 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="grid gap-6">
-          <div className="rounded-[1.8rem] border border-white/8 bg-[rgba(12,20,31,0.72)] p-6">
-            <p className="text-[0.68rem] uppercase tracking-[0.28em] text-white/42">Viewer profile</p>
+          <div className="sv-surface rounded-[1.8rem] p-6">
+            <p className="sv-overline">Viewer profile</p>
             <form action={updateViewerProfile} className="mt-5 grid gap-4">
               <label className="block">
-                <span className="mb-2 block text-[0.68rem] uppercase tracking-[0.24em] text-white/42">
-                  Display name
-                </span>
+                <span className="sv-field-label">Display name</span>
                 <input
-                  className="w-full rounded-[1.1rem] border border-white/10 bg-[rgba(7,17,27,0.7)] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[var(--color-highlight)]/40"
+                  className="sv-input"
                   defaultValue={profile.displayName}
                   name="displayName"
                   placeholder="Your name"
@@ -99,165 +175,320 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
                 />
               </label>
               <label className="block">
-                <span className="mb-2 block text-[0.68rem] uppercase tracking-[0.24em] text-white/42">
-                  Bio
-                </span>
+                <span className="sv-field-label">Bio</span>
                 <textarea
-                  className="min-h-32 w-full rounded-[1.1rem] border border-white/10 bg-[rgba(7,17,27,0.7)] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[var(--color-highlight)]/40"
+                  className="sv-textarea min-h-32"
                   defaultValue={profile.bio ?? ""}
                   name="bio"
                   placeholder="What kind of work are you drawn to?"
                 />
               </label>
-              <button className="rounded-full bg-[var(--color-highlight)] px-6 py-3 text-sm font-semibold text-[var(--color-bg)]">
+              <button className="sv-btn sv-btn-primary w-full sm:w-auto">
                 Save viewer profile
               </button>
             </form>
           </div>
 
-          <div className="rounded-[1.8rem] border border-white/8 bg-[rgba(12,20,31,0.72)] p-6">
-            <p className="text-[0.68rem] uppercase tracking-[0.28em] text-white/42">Submission health</p>
-            <div className="mt-4 grid gap-3 text-sm text-white/70 sm:grid-cols-3">
-              <div className="rounded-[1.2rem] border border-white/8 bg-white/[0.03] px-4 py-4">
+          <div className="sv-surface rounded-[1.8rem] p-6">
+            <p className="sv-overline">Submission health</p>
+            <div className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
                 {library.submissions.length} submissions
               </div>
-              <div className="rounded-[1.2rem] border border-white/8 bg-white/[0.03] px-4 py-4">
+              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
                 {library.saved.length} saved films
               </div>
-              <div className="rounded-[1.2rem] border border-white/8 bg-white/[0.03] px-4 py-4">
+              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
                 {library.claims.length} claim requests
+              </div>
+            </div>
+          </div>
+
+          <div className="sv-surface rounded-[1.8rem] p-6">
+            <p className="sv-overline">Submission queue</p>
+            <div className="mt-4 grid gap-3">
+              {library.submissions.length ? (
+                library.submissions.map((submission) => {
+                  const rejectionLabel = getSubmissionRejectionReasonLabel(submission.rejectionReason);
+
+                  return (
+                    <div key={submission.id} className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-lg font-medium tracking-[-0.02em] text-foreground">{submission.title}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {new Date(submission.createdAt).toLocaleDateString("en-US")}
+                            {submission.agentName ? ` / drafted by ${submission.agentName}` : ""}
+                          </p>
+                        </div>
+                        <span className="sv-chip">{submission.status}</span>
+                      </div>
+                      {submission.status === "draft" && submission.agentName ? (
+                        <form action={submitAgentDraftSubmission.bind(null, submission.id)} className="mt-4 flex flex-wrap gap-2">
+                          <input name="redirectTo" type="hidden" value="/studio" />
+                          <button className="sv-btn sv-btn-primary">Submit to moderation</button>
+                          <span className="sv-chip">Human approval required before the queue</span>
+                        </form>
+                      ) : null}
+                      {rejectionLabel ? (
+                        <div className="mt-4 rounded-[1rem] border border-border/80 bg-background/65 px-4 py-4 text-sm text-muted-foreground">
+                          <p className="sv-overline">Moderator feedback</p>
+                          <p className="mt-2 text-foreground">{rejectionLabel}</p>
+                          {submission.rejectionDetails ? (
+                            <p className="mt-2 leading-6 text-muted-foreground">{submission.rejectionDetails}</p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="sv-surface-soft rounded-[1.2rem] px-4 py-5 text-sm text-muted-foreground">
+                  No submissions yet.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="sv-surface rounded-[1.8rem] p-6">
+            <p className="sv-overline">Next moves</p>
+            <div className="mt-4 grid gap-3 text-sm text-muted-foreground">
+              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+                Keep your public creator bio sharp. It shapes trust when someone lands from a shared film link.
+              </div>
+              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+                Submit only embeddable, rights-safe YouTube sources so moderation stays fast and approvals stay clean.
+              </div>
+              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+                Early accepted titles lock permanent serial numbers. That is the public collectible layer.
+              </div>
+              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+                Your Supaviewer URL should be the status object you share in decks, ads, and launch posts.
               </div>
             </div>
           </div>
         </div>
 
-        <div className="rounded-[1.8rem] border border-white/8 bg-[rgba(12,20,31,0.72)] p-6">
-          <p className="text-[0.68rem] uppercase tracking-[0.28em] text-white/42">Creator profile</p>
+        <div className="sv-surface rounded-[1.8rem] p-6">
+          <p className="sv-overline">Creator profile</p>
           {ownedCreator ? (
             <div className="mt-4 grid gap-6">
-              <div className={`rounded-[1.8rem] border border-white/8 p-6 ${ownedCreator.heroClassName}`}>
-                <p className="text-[0.68rem] uppercase tracking-[0.28em] text-white/46">Active public profile</p>
-                <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white">{ownedCreator.name}</h2>
-                <p className="mt-3 max-w-2xl text-base leading-7 text-white/68">{ownedCreator.bio}</p>
+              <div className="sv-page-hero--compact rounded-[1.8rem] p-6">
+                <p className="sv-overline">Active public profile</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <StatusPill badge={ownedCreator.founderBadge} />
+                  {ownedCreator.trophies.slice(0, 2).map((trophy) => (
+                    <StatusPill key={`${ownedCreator.slug}-${trophy.slug}`} trophy={trophy} />
+                  ))}
+                </div>
+                <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{ownedCreator.name}</h2>
+                <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">{ownedCreator.bio}</p>
                 <div className="mt-5 flex flex-wrap gap-3">
                   <Link
-                    className="rounded-full bg-[var(--color-highlight)] px-5 py-3 text-sm font-semibold text-[var(--color-bg)]"
+                    className="sv-btn sv-btn-primary"
                     href={`/creators/${ownedCreator.slug}`}
                   >
                     View public profile
                   </Link>
-                  <span className="rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/68">
+                  <span className="sv-chip min-h-[44px] px-4 py-3 text-sm">
                     {ownedCreator.filmsDirected} films
                   </span>
+                  <ShareButton
+                    analyticsTarget={{ creatorId: ownedCreator.id, surface: "studio-profile" }}
+                    className="sv-btn sv-btn-secondary w-full sm:w-auto"
+                    label="Share profile"
+                    path={buildCreatorHref(ownedCreator)}
+                    title={`${ownedCreator.name} on Supaviewer`}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                  <p className="sv-overline">Bragging rights</p>
+                  <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-foreground">
+                    {ownedCreator.earliestSerial ? `#${ownedCreator.earliestSerial}` : "Pending"}
+                  </p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Earliest accepted serial on your creator page.
+                  </p>
+                </div>
+                <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                  <p className="sv-overline">Trophies</p>
+                  <div className="mt-3">
+                    <TrophyStrip emptyLabel="No trophies yet. Earn or get featured to create the first one." trophies={ownedCreator.trophies} />
+                  </div>
+                </div>
+              </div>
+
+              {creatorAnalytics ? (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                    <p className="sv-overline">Saves</p>
+                    <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-foreground">{creatorAnalytics.totalSaves}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Signals across your public filmography.</p>
+                  </div>
+                  <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                    <p className="sv-overline">Discussion</p>
+                    <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-foreground">{creatorAnalytics.totalDiscussion}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Public comments attached to your accepted titles.</p>
+                  </div>
+                  <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                    <p className="sv-overline">Shares tracked</p>
+                    <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-foreground">{creatorAnalytics.totalShares}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Creator-page and film-page share actions captured in product.</p>
+                  </div>
+                  <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                    <p className="sv-overline">Collection placements</p>
+                    <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-foreground">{creatorAnalytics.collectionPlacements}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Editorial placements helping discovery beyond source hosting.</p>
+                  </div>
+                </div>
+              ) : null}
+
+              {creatorAnalytics ? (
+                <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                  <p className="sv-overline">Creator analytics</p>
+                  <div className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+                    <div>
+                      Earliest serial percentile:{" "}
+                      <span className="text-foreground">
+                        {creatorAnalytics.serialPercentile ? `top ${creatorAnalytics.serialPercentile}% early` : "Pending"}
+                      </span>
+                    </div>
+                    <div>
+                      Total views: <span className="text-foreground">{creatorAnalytics.totalViews}</span>
+                    </div>
+                    <div>
+                      Top shared title:{" "}
+                      <span className="text-foreground">
+                        {creatorAnalytics.topSharedFilmTitle
+                          ? `${creatorAnalytics.topSharedFilmTitle} (${creatorAnalytics.topSharedFilmShares})`
+                          : "No share leader yet"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                <p className="sv-overline">Why Supaviewer matters</p>
+                <div className="mt-4 grid gap-3 text-sm text-muted-foreground">
+                  <div>Permanent serials make your release legible as part of the early AI-film canon.</div>
+                  <div>Founder badges and trophies make your creator page inherently more shareable than the source upload page.</div>
+                  <div>Canonical Supaviewer URLs preserve art context, discovery context, and status in one place.</div>
                 </div>
               </div>
 
               <form action={updateCreatorProfile} className="grid gap-4">
                 <label className="block">
-                  <span className="mb-2 block text-[0.68rem] uppercase tracking-[0.24em] text-white/42">
-                    Creator name
-                  </span>
+                  <span className="sv-field-label">Creator name</span>
                   <input
-                    className="w-full rounded-[1.1rem] border border-white/10 bg-[rgba(7,17,27,0.7)] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[var(--color-highlight)]/40"
+                    className="sv-input"
                     defaultValue={ownedCreator.name}
                     name="name"
                     type="text"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-[0.68rem] uppercase tracking-[0.24em] text-white/42">
-                    Headline
-                  </span>
+                  <span className="sv-field-label">Headline</span>
                   <input
-                    className="w-full rounded-[1.1rem] border border-white/10 bg-[rgba(7,17,27,0.7)] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[var(--color-highlight)]/40"
+                    className="sv-input"
                     defaultValue={ownedCreator.headline}
                     name="headline"
                     type="text"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-[0.68rem] uppercase tracking-[0.24em] text-white/42">
-                    Bio
-                  </span>
+                  <span className="sv-field-label">Bio</span>
                   <textarea
-                    className="min-h-36 w-full rounded-[1.1rem] border border-white/10 bg-[rgba(7,17,27,0.7)] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[var(--color-highlight)]/40"
+                    className="sv-textarea min-h-36"
                     defaultValue={ownedCreator.bio}
                     name="bio"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-[0.68rem] uppercase tracking-[0.24em] text-white/42">
-                    Location
-                  </span>
+                  <span className="sv-field-label">Location</span>
                   <input
-                    className="w-full rounded-[1.1rem] border border-white/10 bg-[rgba(7,17,27,0.7)] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[var(--color-highlight)]/40"
+                    className="sv-input"
                     defaultValue={ownedCreator.location}
                     name="location"
                     type="text"
                   />
                 </label>
-                <button className="rounded-full bg-[var(--color-highlight)] px-6 py-3 text-sm font-semibold text-[var(--color-bg)]">
+                <button className="sv-btn sv-btn-primary w-full sm:w-auto">
                   Save creator profile
                 </button>
               </form>
             </div>
           ) : (
             <div className="mt-4 grid gap-5">
-              <p className="text-sm leading-6 text-white/66">
+              <p className="text-sm leading-6 text-muted-foreground">
                 Create your public creator page to own your filmography and claim submissions under a
                 single identity.
               </p>
               <form action={createCreatorProfile} className="grid gap-4">
                 <label className="block">
-                  <span className="mb-2 block text-[0.68rem] uppercase tracking-[0.24em] text-white/42">
-                    Creator name
-                  </span>
+                  <span className="sv-field-label">Creator name</span>
                   <input
-                    className="w-full rounded-[1.1rem] border border-white/10 bg-[rgba(7,17,27,0.7)] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[var(--color-highlight)]/40"
+                    className="sv-input"
                     name="name"
                     placeholder="Mira Sol"
                     type="text"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-[0.68rem] uppercase tracking-[0.24em] text-white/42">
-                    Headline
-                  </span>
+                  <span className="sv-field-label">Headline</span>
                   <input
-                    className="w-full rounded-[1.1rem] border border-white/10 bg-[rgba(7,17,27,0.7)] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[var(--color-highlight)]/40"
+                    className="sv-input"
                     name="headline"
                     placeholder="Slow-burn AI thrillers with digital weather and human fragility."
                     type="text"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-[0.68rem] uppercase tracking-[0.24em] text-white/42">
-                    Bio
-                  </span>
+                  <span className="sv-field-label">Bio</span>
                   <textarea
-                    className="min-h-36 w-full rounded-[1.1rem] border border-white/10 bg-[rgba(7,17,27,0.7)] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[var(--color-highlight)]/40"
+                    className="sv-textarea min-h-36"
                     name="bio"
                     placeholder="Describe your cinematic practice, themes, and process."
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-[0.68rem] uppercase tracking-[0.24em] text-white/42">
-                    Location
-                  </span>
+                  <span className="sv-field-label">Location</span>
                   <input
-                    className="w-full rounded-[1.1rem] border border-white/10 bg-[rgba(7,17,27,0.7)] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[var(--color-highlight)]/40"
+                    className="sv-input"
                     name="location"
                     placeholder="Kolkata"
                     type="text"
                   />
                 </label>
-                <button className="rounded-full bg-[var(--color-highlight)] px-6 py-3 text-sm font-semibold text-[var(--color-bg)]">
+                <button className="sv-btn sv-btn-primary w-full sm:w-auto">
                   Create creator profile
                 </button>
               </form>
             </div>
           )}
         </div>
+      </section>
+
+      <section className="pb-8">
+        <StudioWatchEventsPanel
+          acceptedFilms={watchEventStudioData.acceptedFilms}
+          canSchedule={Boolean(ownedCreator && watchEventStudioData.acceptedFilms.length)}
+          events={watchEventStudioData.events}
+          officialAgents={ownedAgents.filter((agent) => agent.isOfficialCreatorAgent).map((agent) => ({
+            id: agent.id,
+            name: agent.name,
+            slug: agent.slug,
+            trustLevel: agent.trustLevel,
+            isOfficialCreatorAgent: agent.isOfficialCreatorAgent,
+          }))}
+        />
+      </section>
+
+      <section className="pb-8">
+        <StudioAgentPanel agents={ownedAgents} />
       </section>
     </main>
   );

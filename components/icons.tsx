@@ -1,12 +1,16 @@
 import type { SVGProps } from "react";
 
 type IconProps = SVGProps<SVGSVGElement>;
+type ToggleIconProps = IconProps & {
+  filled?: boolean;
+};
 
-export function HeartIcon(props: IconProps) {
+export function HeartIcon({ filled = false, ...props }: ToggleIconProps) {
   return (
     <svg fill="none" viewBox="0 0 24 24" {...props}>
       <path
         d="M12 20.4 4.95 13.7a4.9 4.9 0 0 1 6.93-6.93L12 7.9l.12-.12a4.9 4.9 0 0 1 6.93 6.93L12 20.4Z"
+        fill={filled ? "currentColor" : "none"}
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -16,11 +20,12 @@ export function HeartIcon(props: IconProps) {
   );
 }
 
-export function BookmarkIcon(props: IconProps) {
+export function BookmarkIcon({ filled = false, ...props }: ToggleIconProps) {
   return (
     <svg fill="none" viewBox="0 0 24 24" {...props}>
       <path
         d="M6.5 4.75h11a1 1 0 0 1 1 1v13.5l-6.5-3.9-6.5 3.9V5.75a1 1 0 0 1 1-1Z"
+        fill={filled ? "currentColor" : "none"}
         stroke="currentColor"
         strokeLinejoin="round"
         strokeWidth="1.8"
@@ -115,6 +120,17 @@ export function CreatorIcon(props: IconProps) {
         strokeLinecap="round"
         strokeWidth="1.8"
       />
+    </svg>
+  );
+}
+
+export function BotIcon(props: IconProps) {
+  return (
+    <svg fill="none" viewBox="0 0 24 24" {...props}>
+      <rect x="5.25" y="7.25" width="13.5" height="11.5" rx="3" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 3.75v3.5M8.75 12h.01M15.25 12h.01M9 15.75h6" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+      <circle cx="8.75" cy="12" r="0.75" fill="currentColor" />
+      <circle cx="15.25" cy="12" r="0.75" fill="currentColor" />
     </svg>
   );
 }

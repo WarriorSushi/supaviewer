@@ -4,7 +4,23 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function normalizeNextPath(nextPath: string) {
-  return nextPath.trim() || "/";
+  const trimmed = nextPath.trim();
+
+  if (!trimmed || !trimmed.startsWith("/") || trimmed.startsWith("//")) {
+    return "/";
+  }
+
+  try {
+    const normalized = new URL(trimmed, "http://supaviewer.local");
+
+    if (normalized.origin !== "http://supaviewer.local") {
+      return "/";
+    }
+
+    return `${normalized.pathname}${normalized.search}${normalized.hash}` || "/";
+  } catch {
+    return "/";
+  }
 }
 
 export async function sendMagicLink(formData: FormData) {

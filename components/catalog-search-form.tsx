@@ -1,85 +1,80 @@
+"use client";
+
+import * as React from "react";
+import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 type CatalogSearchFormProps = {
   q?: string;
-  genre?: string;
-  format?: string;
   sort?: string;
-  genres: string[];
-  formats: string[];
+  compact?: boolean;
+  showSort?: boolean;
 };
 
 export function CatalogSearchForm({
   q,
-  genre,
-  format,
-  sort,
-  genres,
-  formats,
+  sort = "featured",
+  compact = false,
+  showSort = true,
 }: CatalogSearchFormProps) {
+  const [selectedSort, setSelectedSort] = React.useState(sort);
+
   return (
-    <form className="sv-surface grid gap-4 rounded-[1rem] p-4 lg:grid-cols-[minmax(0,1.75fr)_repeat(3,minmax(0,0.82fr))_11rem]">
-      <label className="block">
-        <span className="mb-2 block text-[0.62rem] uppercase tracking-[0.22em] text-white/38">
-          Search
-        </span>
-        <input
-          className="sv-input"
-          defaultValue={q}
-          name="q"
-          placeholder="Title, creator, or #serial"
-          type="search"
-        />
+    <form
+      className={[
+        "grid gap-3",
+        compact
+          ? showSort
+            ? "sm:grid-cols-[minmax(0,1fr)_11rem_8.5rem]"
+            : "sm:grid-cols-[minmax(0,1fr)_8.5rem]"
+          : "lg:grid-cols-[minmax(0,1.9fr)_minmax(0,0.9fr)_10rem]",
+      ].join(" ")}
+    >
+      <input name="page" type="hidden" value="1" />
+      <label className="grid gap-2">
+        <span className="sv-overline">Search</span>
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="h-11 rounded-xl border-input/90 bg-background/70 pl-9 shadow-none dark:bg-input/20"
+            defaultValue={q}
+            name="q"
+            placeholder="Title, creator, or #serial"
+            type="search"
+          />
+        </div>
       </label>
-      <label className="block">
-        <span className="mb-2 block text-[0.62rem] uppercase tracking-[0.22em] text-white/38">
-          Genre
-        </span>
-        <select
-          className="sv-select"
-          defaultValue={genre ?? "all"}
-          name="genre"
-        >
-          {genres.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block">
-        <span className="mb-2 block text-[0.62rem] uppercase tracking-[0.22em] text-white/38">
-          Format
-        </span>
-        <select
-          className="sv-select"
-          defaultValue={format ?? "all"}
-          name="format"
-        >
-          {formats.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block">
-        <span className="mb-2 block text-[0.62rem] uppercase tracking-[0.22em] text-white/38">
-          Sort
-        </span>
-        <select
-          className="sv-select"
-          defaultValue={sort ?? "featured"}
-          name="sort"
-        >
-          <option value="featured">featured</option>
-          <option value="recent">recent</option>
-          <option value="runtime">runtime</option>
-          <option value="discussed">discussed</option>
-        </select>
-      </label>
+
+      {showSort ? (
+        <label className="grid gap-2">
+          <span className="sv-overline">Sort</span>
+          <input name="sort" type="hidden" value={selectedSort} />
+          <Select onValueChange={setSelectedSort} value={selectedSort}>
+            <SelectTrigger className="h-11 w-full rounded-xl border-input/90 bg-background/70 shadow-none dark:bg-input/20">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="featured">Featured</SelectItem>
+              <SelectItem value="recent">Recent</SelectItem>
+              <SelectItem value="discussed">Discussed</SelectItem>
+              <SelectItem value="runtime">Runtime</SelectItem>
+            </SelectContent>
+          </Select>
+        </label>
+      ) : null}
+
       <div className="flex items-end">
-        <button className="sv-btn sv-btn-primary h-[46px] w-full">
-          Apply
-        </button>
+        <Button className="sv-btn sv-btn-primary h-11 w-full rounded-xl" type="submit">
+          Search
+        </Button>
       </div>
     </form>
   );

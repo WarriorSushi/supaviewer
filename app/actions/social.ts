@@ -52,6 +52,8 @@ export async function toggleFilmSave(filmId: string, nextPath: string) {
   }
 
   revalidatePath(nextPath);
+  revalidatePath("/");
+  revalidatePath("/films");
   revalidatePath("/library");
 }
 
@@ -75,6 +77,8 @@ export async function addFilmComment(filmId: string, nextPath: string, formData:
   }
 
   revalidatePath(nextPath);
+  revalidatePath("/");
+  revalidatePath("/films");
   redirect(`${nextPath}#comments`);
 }
 

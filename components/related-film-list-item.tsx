@@ -7,7 +7,7 @@ export function RelatedFilmListItem({ film }: { film: Film }) {
   return (
     <Link
       href={buildFilmHref(film)}
-      className="group grid grid-cols-[10.5rem_minmax(0,1fr)] gap-3 rounded-[0.9rem] p-2 transition hover:bg-white/[0.04]"
+      className="group grid grid-cols-[10.5rem_minmax(0,1fr)] gap-3 rounded-xl p-2 transition hover:bg-foreground/[0.04]"
     >
       <div className="relative overflow-hidden rounded-[0.7rem]">
         <div className={`aspect-[16/10] ${film.cardClassName}`} />
@@ -31,11 +31,11 @@ export function RelatedFilmListItem({ film }: { film: Film }) {
         </div>
       </div>
       <div className="min-w-0 py-1">
-        <h3 className="line-clamp-2 text-[0.9rem] font-medium leading-5 text-white transition group-hover:text-white/88">
+        <h3 className="line-clamp-2 text-[0.9rem] font-medium leading-5 text-foreground transition group-hover:text-foreground/80">
           {film.title}
         </h3>
-        <p className="mt-1 text-[0.7rem] uppercase tracking-[0.12em] text-white/44">{film.creatorName}</p>
-        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[0.7rem] text-white/42">
+        <p className="mt-1 text-[0.7rem] uppercase tracking-[0.12em] text-muted-foreground">{film.creatorName}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[0.7rem] text-muted-foreground">
           <span>{film.views} views</span>
           <span>•</span>
           <span>{film.genre}</span>

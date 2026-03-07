@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 type LibraryFilmRow = {
   films: {
     id: string;
+    creator_id: string;
     serial_number: number;
     slug: string;
     title: string;
@@ -41,16 +42,16 @@ function formatCompactNumber(value: number) {
 function themeForFilm(slug: string) {
   const themes: Record<string, { hero: string; card: string }> = {
     "afterlight-valley": {
-      hero: "bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_34%),linear-gradient(135deg,rgba(30,30,35,0.98),rgba(8,8,10,0.98))]",
-      card: "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),transparent_58%),linear-gradient(135deg,rgba(32,32,37,0.96),rgba(8,8,10,0.98))]",
+      hero: "bg-[linear-gradient(135deg,rgba(31,31,35,0.98),rgba(18,18,22,0.98)_42%,rgba(7,7,9,0.99)_78%)]",
+      card: "bg-[linear-gradient(180deg,rgba(28,28,32,0.96),rgba(14,14,18,0.98))]",
     },
     "glass-horizon": {
-      hero: "bg-[radial-gradient(circle_at_10%_20%,rgba(255,255,255,0.12),transparent_32%),linear-gradient(135deg,rgba(26,26,32,0.98),rgba(8,8,10,0.98))]",
-      card: "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_56%),linear-gradient(135deg,rgba(27,27,32,0.96),rgba(8,8,10,0.98))]",
+      hero: "bg-[linear-gradient(135deg,rgba(28,28,32,0.98),rgba(16,16,20,0.98)_42%,rgba(7,7,9,0.99)_78%)]",
+      card: "bg-[linear-gradient(180deg,rgba(25,25,29,0.96),rgba(14,14,18,0.98))]",
     },
     "echoes-for-avalon": {
-      hero: "bg-[radial-gradient(circle_at_85%_8%,rgba(255,255,255,0.14),transparent_34%),linear-gradient(135deg,rgba(34,34,38,0.98),rgba(9,9,11,0.98))]",
-      card: "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.12),transparent_58%),linear-gradient(135deg,rgba(33,33,38,0.96),rgba(9,9,11,0.98))]",
+      hero: "bg-[linear-gradient(135deg,rgba(36,36,40,0.98),rgba(18,18,21,0.98)_42%,rgba(8,8,10,0.99)_78%)]",
+      card: "bg-[linear-gradient(180deg,rgba(31,31,35,0.96),rgba(15,15,18,0.98))]",
     },
   };
 
@@ -71,6 +72,7 @@ function mapFilm(row: NonNullable<LibraryFilmRow["films"]>[number]): Film {
 
   return {
     id: row.id,
+    creatorId: row.creator_id,
     serial: row.serial_number,
     title: row.title,
     slug: row.slug,
@@ -98,6 +100,8 @@ function mapFilm(row: NonNullable<LibraryFilmRow["films"]>[number]): Film {
     heroClassName: theme.hero,
     cardClassName: theme.card,
     collectionSlugs: [],
+    founderBadge: null,
+    trophies: [],
   };
 }
 
@@ -113,13 +117,13 @@ export async function getViewerLibrary() {
     supabase
       .from("saves")
       .select(
-        "films (id, serial_number, slug, title, logline, synopsis, youtube_url, runtime_minutes, release_year, format, genre, mood, tools, languages, featured_weight, discussion_count, views_count, saves_count, published_at, visibility, availability_note, creators (slug, name))",
+        "films (id, creator_id, serial_number, slug, title, logline, synopsis, youtube_url, runtime_minutes, release_year, format, genre, mood, tools, languages, featured_weight, discussion_count, views_count, saves_count, published_at, visibility, availability_note, creators (slug, name))",
       )
       .eq("profile_id", profile.id),
     supabase
       .from("likes")
       .select(
-        "films (id, serial_number, slug, title, logline, synopsis, youtube_url, runtime_minutes, release_year, format, genre, mood, tools, languages, featured_weight, discussion_count, views_count, saves_count, published_at, visibility, availability_note, creators (slug, name))",
+        "films (id, creator_id, serial_number, slug, title, logline, synopsis, youtube_url, runtime_minutes, release_year, format, genre, mood, tools, languages, featured_weight, discussion_count, views_count, saves_count, published_at, visibility, availability_note, creators (slug, name))",
       )
       .eq("profile_id", profile.id),
     supabase
@@ -129,7 +133,7 @@ export async function getViewerLibrary() {
       .order("created_at", { ascending: false }),
     supabase
       .from("submissions")
-      .select("id, proposed_title, status, created_at")
+      .select("id, proposed_title, status, created_at, rejection_reason, rejection_details, agent_submissions (draft_status, promoted_at, agents (name, slug))")
       .eq("profile_id", profile.id)
       .order("created_at", { ascending: false }),
   ]);
@@ -154,11 +158,40 @@ export async function getViewerLibrary() {
       creatorName: firstRelation(claim.creators as { name?: string } | { name?: string }[] | null)?.name ?? "Unknown",
       creatorSlug: firstRelation(claim.creators as { slug?: string } | { slug?: string }[] | null)?.slug ?? "",
     })),
-    submissions: (submissionsResult.data ?? []).map((submission) => ({
-      id: submission.id as string,
-      title: submission.proposed_title as string,
-      status: submission.status as string,
-      createdAt: submission.created_at as string,
-    })),
+    submissions: (submissionsResult.data ?? []).map((submission) => {
+      const agentSubmission = firstRelation(
+        submission.agent_submissions as
+          | {
+              draft_status?: string | null;
+              promoted_at?: string | null;
+              agents?: { name?: string; slug?: string } | { name?: string; slug?: string }[] | null;
+            }
+          | {
+              draft_status?: string | null;
+              promoted_at?: string | null;
+              agents?: { name?: string; slug?: string } | { name?: string; slug?: string }[] | null;
+            }[]
+          | null,
+      );
+      const agent = firstRelation(
+        agentSubmission?.agents as
+          | { name?: string; slug?: string }
+          | { name?: string; slug?: string }[]
+          | null,
+      );
+
+      return {
+        id: submission.id as string,
+        title: submission.proposed_title as string,
+        status: submission.status as string,
+        createdAt: submission.created_at as string,
+        rejectionReason: (submission.rejection_reason as string | null) ?? null,
+        rejectionDetails: (submission.rejection_details as string | null) ?? null,
+        agentDraftStatus: agentSubmission?.draft_status ?? null,
+        agentPromotedAt: agentSubmission?.promoted_at ?? null,
+        agentName: agent?.name ?? null,
+        agentSlug: agent?.slug ?? null,
+      };
+    }),
   };
 }

@@ -1,14 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-const email = "drsyedirfan93@gmail.com";
-const password = "Fra1ni4m";
+const email = process.env.PLAYWRIGHT_TEST_EMAIL;
+const password = process.env.PLAYWRIGHT_TEST_PASSWORD;
 
 test("@headless-only liked and saved films appear in the library", async ({ page }) => {
+  test.skip(!email || !password, "PLAYWRIGHT_TEST_EMAIL and PLAYWRIGHT_TEST_PASSWORD are required.");
   await page.goto("/login");
 
-  const signInForm = page.locator("form").first();
-  await signInForm.getByPlaceholder("you@studio.com").fill(email);
-  await signInForm.getByPlaceholder("Password").fill(password);
+  const signInForm = page.locator("main form").first();
+  await signInForm.getByPlaceholder("you@studio.com").fill(email!);
+  await signInForm.getByPlaceholder("Password").fill(password!);
   await Promise.all([
     page.waitForURL("**/", { timeout: 20_000 }),
     signInForm.getByRole("button", { name: "Sign in with password" }).click(),

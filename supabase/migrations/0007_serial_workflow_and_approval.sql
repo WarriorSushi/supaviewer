@@ -154,10 +154,10 @@ begin
         p_profile_id,
         v_slug,
         v_profile.display_name,
-        'AI filmmaker on Superviewer.',
+        'AI filmmaker on Supaviewer.',
         coalesce(
           nullif(v_profile.bio, ''),
-          v_profile.display_name || ' is building an AI-native filmography on Superviewer.'
+          v_profile.display_name || ' is building an AI-native filmography on Supaviewer.'
         ),
         ''
       )

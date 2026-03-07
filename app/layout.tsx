@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Fraunces, IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
-import { MobileNav } from "@/components/mobile-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -26,9 +26,45 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://superviewer.com"),
-  title: "Superviewer",
-  description: "A cinematic home for AI-native films and numbered discovery.",
+  metadataBase: new URL("https://supaviewer.com"),
+  title: {
+    default: "Supaviewer",
+    template: "%s | Supaviewer",
+  },
+  description: "A cinematic home for AI-native films, creator filmographies, and serial-numbered discovery.",
+  applicationName: "Supaviewer",
+  keywords: [
+    "AI films",
+    "AI cinema",
+    "AI movies",
+    "AI-generated video",
+    "long-form AI video",
+    "creator filmography",
+    "serial catalog",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "Supaviewer",
+    title: "Supaviewer",
+    description: "A cinematic home for AI-native films, creator filmographies, and serial-numbered discovery.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Supaviewer",
+    description: "A cinematic home for AI-native films, creator filmographies, and serial-numbered discovery.",
+  },
+  icons: {
+    icon: [
+      { url: "/brand/supaviewer-logo.png", type: "image/png" },
+      { url: "/brand/supaviewer-logo.webp", type: "image/webp" },
+    ],
+    shortcut: ["/brand/supaviewer-logo.png"],
+    apple: ["/brand/supaviewer-logo.png"],
+  },
 };
 
 export default function RootLayout({
@@ -37,17 +73,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${plusJakartaSans.variable} ${fraunces.variable} ${ibmPlexMono.variable} antialiased`}
       >
-        <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.06),transparent_22%),radial-gradient(circle_at_85%_0%,rgba(255,255,255,0.04),transparent_16%),radial-gradient(circle_at_50%_120%,rgba(20,20,24,0.34),transparent_38%),linear-gradient(180deg,rgba(6,6,8,0),rgba(6,6,8,0.62)_48%,rgba(6,6,8,0.98))]" />
-        <div className="relative min-h-screen">
-          <SiteHeader />
-          {children}
-          <SiteFooter />
-          <MobileNav />
-        </div>
+        <ThemeProvider>
+          <div className="relative min-h-screen">
+            <SiteHeader />
+            {children}
+            <SiteFooter />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );
