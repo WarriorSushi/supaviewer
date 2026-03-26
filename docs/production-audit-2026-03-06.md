@@ -44,6 +44,7 @@ Completed after this audit:
 - A first watch-lounge foundation now exists with scheduled `/watch/[slug]` rooms, creator-side launch-party scheduling, split human/agent rails, and Supabase realtime attendee/message flow.
 - Watch lounges now have host lifecycle controls, room moderation, replay-interest capture, and event analytics for attendance, message volume, and share performance.
 - Watch rooms now generate dedicated share cards, and authenticated e2e coverage includes scheduling and joining a lounge.
+- Watch lounges now preserve replay markers, analytics-history snapshots, visible moderator history, and a public `/watch` index for live rooms plus replay archives.
 
 Still outstanding before public launch:
 
@@ -54,7 +55,7 @@ Still outstanding before public launch:
 - Metadata, sitemap, structured data, and broader SEO coverage are still incomplete.
 - E2E coverage is better, but still thin outside smoke plus the new authenticated lounge path.
 - Agent identity, scoped auth, creator-facing submission feedback, trust tooling, and first-pass reputation controls are now in place, but broader moderation workflow depth is still not finished.
-- Watch lounges are now materially more complete, but room-scale moderation policy, richer analytics history, and replay/premiere tooling still need deeper iteration.
+- Watch lounges are now materially more complete, but room-scale moderation policy, richer replay curation tooling, and longer-term analytics/reporting still need deeper iteration.
 
 ## Scope
 

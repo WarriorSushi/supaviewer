@@ -11,6 +11,15 @@ import { getOfficialAgentsForCreator } from "@/lib/agents";
 import { getCurrentSessionProfile } from "@/lib/auth";
 import { getCreatorBySlug, getFilmsForCreator } from "@/lib/catalog";
 import { getCreatorFollowState } from "@/lib/social";
+import {
+  buildWatchEventHref,
+  getPublicWatchEventsForCreator,
+  getWatchEventAudienceSummary,
+  getWatchEventConversationSummary,
+  getWatchEventPrimaryAction,
+  getWatchEventReplayLead,
+  getWatchEventStatusLabel,
+} from "@/lib/watch-events";
 
 type CreatorDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -58,15 +67,26 @@ export default async function CreatorDetailPage({ params }: CreatorDetailPagePro
     notFound();
   }
 
-  const [creatorFilms, followState, session, officialAgents] = await Promise.all([
+  const [creatorFilms, followState, session, officialAgents, creatorWatchEvents] = await Promise.all([
     getFilmsForCreator(creator.slug),
     getCreatorFollowState(creator.id),
     getCurrentSessionProfile(),
     getOfficialAgentsForCreator(creator.id),
+    getPublicWatchEventsForCreator(creator.id, 4),
   ]);
   const creatorPath = `/creators/${creator.slug}`;
   const totalDiscussion = creatorFilms.reduce((sum, film) => sum + film.discussionCount, 0);
   const founderTitles = creatorFilms.filter((film) => film.founderBadge).length;
+  const watchEventMetrics = creatorWatchEvents.reduce(
+    (acc, event) => {
+      acc.totalShares += event.analytics.shareCount;
+      acc.totalReplayInterest += event.analytics.replayInterestCount;
+      acc.live += event.phase === "live" ? 1 : 0;
+      acc.scheduled += event.phase === "scheduled" ? 1 : 0;
+      return acc;
+    },
+    { totalShares: 0, totalReplayInterest: 0, live: 0, scheduled: 0 },
+  );
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -237,6 +257,90 @@ export default async function CreatorDetailPage({ params }: CreatorDetailPagePro
 
       <section className="grid gap-6 pb-8 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <div className="sv-surface rounded-[1.8rem] p-6">
+          <p className="sv-overline">Launch rooms</p>
+          <div className="mt-4 grid gap-3">
+            {creatorWatchEvents.length ? (
+              creatorWatchEvents.map((event) => {
+                const roomAction = getWatchEventPrimaryAction(event);
+                const audienceSummary = getWatchEventAudienceSummary(event);
+                const conversationSummary = getWatchEventConversationSummary(event);
+                const replayLead = getWatchEventReplayLead(event);
+
+                return (
+                  <Link
+                    key={event.id}
+                    className="sv-surface-soft rounded-[1.25rem] px-4 py-4 transition hover:border-foreground/15"
+                    href={buildWatchEventHref(event)}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex flex-wrap gap-2">
+                        <span className="sv-chip">{getWatchEventStatusLabel(event)}</span>
+                        <span className="sv-chip">#{event.film.serial}</span>
+                      </div>
+                      <span className="text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">
+                        {new Date(event.startsAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-lg font-medium tracking-[-0.02em] text-foreground">{event.title}</p>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{roomAction.description}</p>
+                    <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
+                      <div>Audience story: <span className="text-foreground">{audienceSummary}</span></div>
+                      <div>Conversation split: <span className="text-foreground">{conversationSummary}</span></div>
+                      <div>Replay lead: <span className="text-foreground">{replayLead}</span></div>
+                      <div>
+                        Visible stewardship:{" "}
+                        <span className="text-foreground">
+                          {event.latestModerationEntry
+                            ? `${event.latestModerationEntry.actorDisplayName} last intervened with ${event.latestModerationEntry.action}.`
+                            : "No moderator intervention logged yet."}
+                        </span>
+                      </div>
+                      <div>
+                        Latest room pulse:{" "}
+                        <span className="text-foreground">
+                          {new Date(event.latestActivityAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })
+            ) : (
+              <div className="sv-surface-soft rounded-[1.25rem] px-4 py-5 text-sm text-muted-foreground">
+                No public launch rooms yet. The next watch room will show up here as part of the creator’s public status layer.
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="sv-surface rounded-[1.8rem] p-6">
+          <p className="sv-overline">Event status</p>
+          <div className="mt-4 grid gap-3 text-sm text-foreground/80 sm:grid-cols-2">
+            <div className="sv-surface-soft rounded-[1.25rem] px-4 py-4">
+              <p className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground">Live now</p>
+              <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-foreground">{watchEventMetrics.live}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Rooms currently carrying live audience presence.</p>
+            </div>
+            <div className="sv-surface-soft rounded-[1.25rem] px-4 py-4">
+              <p className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground">Scheduled next</p>
+              <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-foreground">{watchEventMetrics.scheduled}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Canonical room URLs already ready to share.</p>
+            </div>
+            <div className="sv-surface-soft rounded-[1.25rem] px-4 py-4">
+              <p className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground">Replay demand</p>
+              <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-foreground">{watchEventMetrics.totalReplayInterest}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Requests to come back through the replay archive.</p>
+            </div>
+            <div className="sv-surface-soft rounded-[1.25rem] px-4 py-4">
+              <p className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground">Room shares</p>
+              <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-foreground">{watchEventMetrics.totalShares}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Tracked distribution around this creator’s event pages.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-6 pb-8 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+        <div className="sv-surface rounded-[1.8rem] p-6">
           <p className="sv-overline">Official agents</p>
           <div className="mt-4 grid gap-3">
             {officialAgents.length ? (
@@ -264,13 +368,13 @@ export default async function CreatorDetailPage({ params }: CreatorDetailPagePro
           <p className="sv-overline">Agent stance</p>
           <div className="mt-4 grid gap-3 text-sm text-muted-foreground">
             <div className="sv-surface-soft rounded-[1.25rem] px-4 py-4">
-              Official agents give viewers a companion layer without cluttering the main watch experience.
+              Official agents should stay quiet by default, then answer only when viewers actually need companion context.
             </div>
             <div className="sv-surface-soft rounded-[1.25rem] px-4 py-4">
-              Agent replies and reactions stay separate from human signals to preserve trust.
+              Agent replies and reactions stay separate from human signals so the room keeps one readable social surface.
             </div>
             <div className="sv-surface-soft rounded-[1.25rem] px-4 py-4">
-              Every agent keeps a stable identity and owner relationship instead of posting anonymously.
+              Every agent keeps a stable identity, owner relationship, and permission trail instead of posting anonymously.
             </div>
           </div>
         </div>

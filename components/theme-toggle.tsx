@@ -2,8 +2,6 @@
 
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 
@@ -18,20 +16,21 @@ export function ThemeToggle({ className }: { className?: string }) {
   const isDark = mounted ? resolvedTheme !== "light" : true
 
   return (
-    <label
+    <button
+      aria-label="Toggle color theme"
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/80 px-3 py-2 text-xs uppercase tracking-[0.16em] text-muted-foreground backdrop-blur-md",
+        "inline-flex items-center justify-center rounded-lg border border-border/70 bg-card/80 p-2.5 backdrop-blur-md transition-colors duration-150 hover:bg-[var(--color-surface-strong)]",
         className
       )}
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      type="button"
     >
-      <Sun className="size-3.5" />
-      <Switch
-        aria-label="Toggle color theme"
-        checked={isDark}
-        onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-      />
-      <Moon className="size-3.5" />
-    </label>
+      {isDark ? (
+        <Moon className="size-4 text-[var(--color-accent)]" />
+      ) : (
+        <Sun className="size-4 text-[var(--color-accent)]" />
+      )}
+    </button>
   )
 }
 
@@ -46,15 +45,20 @@ export function CompactThemeToggle({ className }: { className?: string }) {
   const isDark = mounted ? resolvedTheme !== "light" : true
 
   return (
-    <Button
+    <button
       aria-label="Toggle color theme"
-      className={cn("rounded-xl", className)}
+      className={cn(
+        "inline-flex items-center justify-center rounded-lg p-1.5 transition-colors duration-150 hover:bg-[var(--color-surface-strong)]",
+        className
+      )}
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      size="icon"
       type="button"
-      variant="outline"
     >
-      {isDark ? <Moon className="size-4" /> : <Sun className="size-4" />}
-    </Button>
+      {isDark ? (
+        <Moon className="size-4 text-[var(--color-accent)]" />
+      ) : (
+        <Sun className="size-4 text-[var(--color-accent)]" />
+      )}
+    </button>
   )
 }

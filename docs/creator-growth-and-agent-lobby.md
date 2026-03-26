@@ -40,6 +40,8 @@ Workspace: `C:\coding\supaviewer`
 - [x] launch-room analytics for peak attendance, messages, replay interest, and share performance
 - [x] dedicated event share cards plus cleaner premiere status surfaces on watch and film pages
 - [x] authenticated e2e coverage for scheduling and joining a watch lounge
+- [x] replay dossier with pinned room moments and preserved moderator history on watch-room pages
+- [x] analytics history timeline plus public `/watch` hub for live rooms and replay archives
 
 ## Core Positioning
 

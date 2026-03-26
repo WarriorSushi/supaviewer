@@ -15,7 +15,7 @@ type FilmsPageProps = {
 
 export const metadata: Metadata = {
   title: "Browse films",
-  description: "Search Supaviewer’s catalog of AI-native films by title, creator, or serial number.",
+  description: "Search Supaviewer's catalog of AI-native films by title, creator, or serial number.",
   alternates: {
     canonical: "/films",
   },
@@ -50,16 +50,17 @@ export default async function FilmsPage({ searchParams }: FilmsPageProps) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-[110rem] px-4 pb-28 pt-8 sm:px-6 lg:px-10">
-      <section className="sv-surface rounded-[1rem] p-4 sm:rounded-[1.2rem] sm:p-6">
+    <main className="mx-auto w-full max-w-[96rem] px-4 pb-28 pt-8 sm:px-6 lg:px-10">
+      {/* ── Search header ── */}
+      <section className="sv-animate-in">
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="sv-overline hidden sm:block">Catalog</p>
-              <h1 className="text-[1.28rem] font-semibold tracking-[-0.05em] text-foreground sm:mt-2 sm:text-[2.1rem]">
+              <h1 className="sv-display sm:mt-2">
                 Browse films
               </h1>
-              <p className="mt-1 hidden max-w-2xl text-[0.88rem] leading-6 text-muted-foreground sm:block">
+              <p className="sv-body mt-1 hidden max-w-2xl sm:block">
                 Search by title, creator, or serial.
               </p>
             </div>
@@ -76,13 +77,16 @@ export default async function FilmsPage({ searchParams }: FilmsPageProps) {
         </div>
       </section>
 
-      <section className="grid gap-4 pb-8 pt-4 sm:gap-5 sm:pt-6 sm:grid-cols-2 xl:grid-cols-4">
+      {/* ── Film grid ── */}
+      <section className="mt-12 grid gap-5 sm:grid-cols-2 xl:grid-cols-4 sv-animate-in sv-stagger-1">
         {catalog.films.map((film) => (
           <FilmCard key={film.serial} film={film} />
         ))}
       </section>
-      <section className="flex flex-col gap-3 border-t border-border/80 pt-6 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
+
+      {/* ── Pagination ── */}
+      <section className="mt-12 flex flex-col gap-3 border-t border-border/50 pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <p className="sv-body-sm">
           Page {catalog.page} of {catalog.totalPages}
         </p>
         <div className="flex gap-2">

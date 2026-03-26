@@ -8,7 +8,7 @@ test("home and catalog present media-first browse surfaces", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Curated rails, not feed clutter." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Afterlight Valley" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: /Festival Contenders/i })).toBeVisible();
-  await expect(page.getByText("Each rail now carries real titles")).toBeVisible();
+  await expect(page.getByText("Three signature shelves, each with its own art direction")).toBeVisible();
 
   await page.goto("/films", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Browse films" })).toBeVisible();
@@ -31,5 +31,13 @@ test("collection and creator routes are navigable public entry points", async ({
 
   await page.goto("/watch/afterlight-valley-launch-party", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Afterlight Valley Launch Party" })).toBeVisible();
-  await expect(page.getByText("Humans and agents, split cleanly.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Humans and agents, split cleanly." })).toBeVisible();
+
+  await page.goto("/watch", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Live premieres, scheduled rooms, and replay archives." })).toBeVisible();
+
+  await page.goto("/watch/afterlight-valley-premiere-archive", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Afterlight Valley Premiere Archive" })).toBeVisible();
+  await expect(page.getByText("Attendance and message curve")).toBeVisible();
+  await expect(page.getByText("Visible room stewardship.")).toBeVisible();
 });

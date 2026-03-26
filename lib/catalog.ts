@@ -69,6 +69,9 @@ export type Collection = {
   slug: string;
   name: string;
   description: string;
+  eyebrow: string;
+  subheading: string;
+  artImagePath: string;
   countLabel: string;
   filmCount: number;
   totalRuntimeMinutes: number;
@@ -182,6 +185,31 @@ const collectionThemes: Record<string, string> = {
     "bg-[linear-gradient(135deg,rgba(25,25,29,0.98),rgba(15,15,18,0.98)_42%,rgba(8,8,10,0.99)_78%)]",
   "first-100":
     "bg-[linear-gradient(135deg,rgba(31,31,35,0.98),rgba(18,18,21,0.98)_42%,rgba(8,8,10,0.99)_78%)]",
+};
+
+const collectionArtDirection: Record<
+  string,
+  {
+    eyebrow: string;
+    subheading: string;
+    artImagePath: string;
+  }
+> = {
+  "festival-contenders": {
+    eyebrow: "Editorial rail",
+    subheading: "Award-pressure long-form films with prestige framing and major-screen energy.",
+    artImagePath: "/collections/festival-contenders-art.svg",
+  },
+  "first-100": {
+    eyebrow: "Early canon",
+    subheading: "The first permanent serials, treated like numbered works in the opening archive.",
+    artImagePath: "/collections/first-100-art.svg",
+  },
+  "midnight-surrealism": {
+    eyebrow: "Late-night shelf",
+    subheading: "Hypnotic, stranger titles built for headphones, darkness, and uninterrupted attention.",
+    artImagePath: "/collections/midnight-surrealism-art.svg",
+  },
 };
 
 const filmCredits: Record<string, { role: string; name: string }[]> = {
@@ -680,12 +708,20 @@ function buildCollections(collectionRows: CollectionRow[], films: Film[]) {
     const collectionFilms = [...(filmsByCollection.get(row.slug) ?? [])].sort(
       (a, b) => b.featuredWeight - a.featuredWeight || a.serial - b.serial,
     );
+    const artDirection = collectionArtDirection[row.slug] ?? {
+      eyebrow: "Collection",
+      subheading: row.description ?? "",
+      artImagePath: "",
+    };
 
     return {
       id: row.id,
       slug: row.slug,
       name: row.name,
       description: row.description ?? "",
+      eyebrow: artDirection.eyebrow,
+      subheading: artDirection.subheading,
+      artImagePath: artDirection.artImagePath,
       countLabel: `${collectionFilms.length} films`,
       filmCount: collectionFilms.length,
       totalRuntimeMinutes: collectionFilms.reduce((sum, film) => sum + film.runtimeMinutes, 0),

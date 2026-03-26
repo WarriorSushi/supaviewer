@@ -6,6 +6,12 @@ import { buildYouTubeThumbnailUrl } from "@/lib/youtube";
 export type WatchEventStatus = "scheduled" | "live" | "ended" | "cancelled";
 export type WatchAttendeeType = "human" | "agent";
 export type WatchPresenceState = "watching" | "taking-notes" | "answering-questions" | "hosting" | "away";
+export type WatchEventModerationAction =
+  | "remove-message"
+  | "mute-attendee"
+  | "unmute-attendee"
+  | "highlight-message"
+  | "remove-highlight";
 
 export type WatchEventFilm = {
   id: string;
@@ -62,8 +68,49 @@ export type WatchEventAnalytics = {
   peakHumanCount: number;
   peakAgentCount: number;
   totalMessages: number;
+  humanMessageCount: number;
+  agentMessageCount: number;
   replayInterestCount: number;
   shareCount: number;
+};
+
+export type WatchEventAnalyticsSnapshot = {
+  id: string;
+  eventId: string;
+  humanCount: number;
+  agentCount: number;
+  totalMessageCount: number;
+  replayInterestCount: number;
+  shareCount: number;
+  capturedAt: string;
+};
+
+export type WatchEventReplayHighlight = {
+  id: string;
+  eventId: string;
+  sourceMessageId: string | null;
+  sourceAuthorType: WatchAttendeeType | null;
+  sourceDisplayName: string | null;
+  sourceBody: string | null;
+  title: string;
+  note: string;
+  createdByProfileId: string | null;
+  createdByDisplayName: string;
+  highlightedAt: string;
+};
+
+export type WatchEventModerationEntry = {
+  id: string;
+  eventId: string;
+  actorProfileId: string | null;
+  actorDisplayName: string;
+  action: WatchEventModerationAction;
+  targetProfileId: string | null;
+  targetMessageId: string | null;
+  targetDisplayName: string | null;
+  reason: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
 };
 
 export type WatchEventSummary = {
@@ -82,6 +129,12 @@ export type WatchEventSummary = {
   liveHumanCount: number;
   liveAgentCount: number;
   analytics: WatchEventAnalytics;
+  latestSnapshot: WatchEventAnalyticsSnapshot | null;
+  latestActivityAt: string;
+  topReplayHighlight: WatchEventReplayHighlight | null;
+  latestModerationEntry: WatchEventModerationEntry | null;
+  replayHighlightCount: number;
+  moderationActionCount: number;
 };
 
 export type WatchEvent = WatchEventSummary & {
@@ -98,6 +151,9 @@ export type WatchEvent = WatchEventSummary & {
   } | null;
   attendees: WatchEventAttendee[];
   messages: WatchEventMessage[];
+  analyticsHistory: WatchEventAnalyticsSnapshot[];
+  replayHighlights: WatchEventReplayHighlight[];
+  moderationHistory: WatchEventModerationEntry[];
   canModerate: boolean;
 };
 
@@ -158,9 +214,67 @@ type WatchEventMessageRow = {
   agent_id: string | null;
 };
 
+type WatchEventAnalyticsMessageRow = {
+  event_id: string;
+  author_type: WatchAttendeeType;
+};
+
 type WatchEventMuteRow = {
   event_id: string;
   profile_id: string;
+};
+
+type WatchEventLifecycleRow = {
+  id: string;
+  slug: string;
+  film_id: string;
+  host_profile_id: string | null;
+  official_agent_id: string | null;
+  status: WatchEventStatus;
+  starts_at: string;
+  ends_at: string | null;
+  actual_started_at: string | null;
+  actual_ended_at: string | null;
+  cancelled_at: string | null;
+};
+
+type WatchEventAnalyticsSnapshotRow = {
+  id: string;
+  event_id: string;
+  human_count: number;
+  agent_count: number;
+  total_message_count: number;
+  replay_interest_count: number;
+  share_count: number;
+  captured_at: string;
+};
+
+type WatchEventReplayHighlightRow = {
+  id: string;
+  event_id: string;
+  source_message_id: string | null;
+  source_author_type: WatchAttendeeType | null;
+  source_display_name: string | null;
+  source_body: string | null;
+  title: string;
+  note: string;
+  created_by_profile_id: string | null;
+  created_by_display_name: string;
+  highlighted_at: string;
+};
+
+type WatchEventModerationEntryRow = {
+  id: string;
+  event_id: string;
+  actor_profile_id: string | null;
+  actor_display_name: string;
+  action: WatchEventModerationAction;
+  target_profile_id: string | null;
+  target_message_id: string | null;
+  target_display_name: string | null;
+  reason: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
 };
 
 type CreatorRow = {
@@ -203,6 +317,27 @@ type FilmRow = {
     | null;
 };
 
+export type WatchEventLifecycleRecord = {
+  id: string;
+  slug: string;
+  filmId: string;
+  hostProfileId: string | null;
+  officialAgentId: string | null;
+  status: WatchEventStatus;
+  phase: WatchEventStatus;
+  startsAt: string;
+  endsAt: string | null;
+  actualStartedAt: string | null;
+  actualEndedAt: string | null;
+  cancelledAt: string | null;
+};
+
+type WatchEventInteractionKind = "presence" | "message" | "replay-interest";
+type WatchEventActorType = "human" | "agent";
+
+const WATCH_EVENT_LIFECYCLE_SELECT =
+  "id, slug, film_id, host_profile_id, official_agent_id, status, starts_at, ends_at, actual_started_at, actual_ended_at, cancelled_at";
+
 function firstRelation<T>(value: T | T[] | null | undefined) {
   if (Array.isArray(value)) {
     return value[0] ?? null;
@@ -239,6 +374,124 @@ export function getWatchEventStatusLabel(event: Pick<WatchEventSummary, "phase">
   return "Premiere scheduled";
 }
 
+export function getWatchEventPrimaryAction(
+  event: Pick<WatchEventSummary, "phase" | "startsAt" | "officialAgent" | "topReplayHighlight">,
+) {
+  if (event.phase === "live") {
+    return {
+      eyebrow: "Do this first",
+      title: "Press play, then keep the human rail open.",
+      description:
+        "Start inside the room with humans visible. Open the agent layer only when you want companion context, not background noise.",
+      ctaLabel: "Open live room",
+    };
+  }
+
+  if (event.phase === "ended") {
+    return {
+      eyebrow: "Do this first",
+      title: "Re-enter through the replay dossier.",
+      description: event.topReplayHighlight
+        ? `${event.topReplayHighlight.sourceDisplayName ?? "The room"} pinned the strongest moment so you can pick up the story fast.`
+        : "Open the room archive for replay markers, room curve, and visible moderator history.",
+      ctaLabel: "Open replay room",
+    };
+  }
+
+  if (event.phase === "cancelled") {
+    return {
+      eyebrow: "Do this first",
+      title: "Check the archive before resharing this room.",
+      description:
+        "This room is no longer going live, but the canonical page still preserves what was scheduled and any replay context already attached.",
+      ctaLabel: "Open room archive",
+    };
+  }
+
+  return {
+    eyebrow: "Do this first",
+    title: "Save the canonical room URL and show up on time.",
+    description: event.officialAgent
+      ? `The room is already live as a shareable object, with ${event.officialAgent.name} attached as the official companion once the premiere starts.`
+      : "Share the room URL now so the audience lands in the canonical premiere object instead of a raw source link.",
+    ctaLabel: "Open scheduled room",
+  };
+}
+
+export function getWatchEventAudienceSummary(
+  event: Pick<
+    WatchEventSummary,
+    "phase" | "startsAt" | "liveHumanCount" | "liveAgentCount" | "humanAttendeeCount" | "agentAttendeeCount" | "analytics"
+  >,
+) {
+  if (event.phase === "live") {
+    return `${event.liveHumanCount} humans live with ${event.liveAgentCount} agents in the companion rail.`;
+  }
+
+  if (event.phase === "scheduled") {
+    return `${event.humanAttendeeCount} humans and ${event.agentAttendeeCount} agents have already touched the room before kickoff.`;
+  }
+
+  return `Peak room load reached ${event.analytics.peakHumanCount} humans and ${event.analytics.peakAgentCount} agents.`;
+}
+
+export function getWatchEventConversationSummary(
+  event: Pick<WatchEventSummary, "analytics" | "replayHighlightCount" | "moderationActionCount">,
+) {
+  const { humanMessageCount, agentMessageCount, replayInterestCount, shareCount } = event.analytics;
+
+  if (humanMessageCount === 0 && agentMessageCount === 0) {
+    return replayInterestCount
+      ? `${replayInterestCount} replay request${replayInterestCount === 1 ? "" : "s"} so far.`
+      : "The room is still waiting for its first readable reaction.";
+  }
+
+  return `${humanMessageCount} human reactions, ${agentMessageCount} companion notes, ${event.replayHighlightCount} replay markers, and ${shareCount} room share${shareCount === 1 ? "" : "s"}.`;
+}
+
+export function getWatchEventReplayLead(
+  event: Pick<WatchEventSummary, "topReplayHighlight" | "replayHighlightCount" | "moderationActionCount" | "latestModerationEntry">,
+) {
+  if (event.topReplayHighlight?.sourceBody) {
+    return event.topReplayHighlight.sourceBody;
+  }
+
+  if (event.topReplayHighlight) {
+    return event.topReplayHighlight.note || "Pinned into the replay dossier for fast re-entry.";
+  }
+
+  if (event.latestModerationEntry?.reason) {
+    return event.latestModerationEntry.reason;
+  }
+
+  if (event.replayHighlightCount > 0) {
+    return `${event.replayHighlightCount} replay marker${event.replayHighlightCount === 1 ? "" : "s"} saved from the room.`;
+  }
+
+  if (event.moderationActionCount > 0) {
+    return `${event.moderationActionCount} visible moderator action${event.moderationActionCount === 1 ? "" : "s"} kept the room readable.`;
+  }
+
+  return "No replay dossier yet. The room still keeps the canonical attendance curve and watch context together.";
+}
+
+export function getWatchEventModerationActionLabel(action: WatchEventModerationAction) {
+  switch (action) {
+    case "remove-message":
+      return "Message removed";
+    case "mute-attendee":
+      return "Attendee muted";
+    case "unmute-attendee":
+      return "Attendee unmuted";
+    case "highlight-message":
+      return "Replay marker pinned";
+    case "remove-highlight":
+      return "Replay marker removed";
+    default:
+      return "Moderator action";
+  }
+}
+
 export function getWatchEventPhase(
   status: WatchEventStatus,
   startsAt: string,
@@ -265,6 +518,312 @@ export function getWatchEventPhase(
   }
 
   return "scheduled";
+}
+
+function mapWatchEventLifecycle(row: WatchEventLifecycleRow): WatchEventLifecycleRecord {
+  return {
+    id: row.id,
+    slug: row.slug,
+    filmId: row.film_id,
+    hostProfileId: row.host_profile_id,
+    officialAgentId: row.official_agent_id,
+    status: row.status,
+    phase: getWatchEventPhase(row.status, row.starts_at, row.ends_at),
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+    actualStartedAt: row.actual_started_at,
+    actualEndedAt: row.actual_ended_at,
+    cancelledAt: row.cancelled_at,
+  };
+}
+
+export async function resolveWatchEventRecord(input: {
+  eventId?: string | null;
+  eventSlug?: string | null;
+}) {
+  const eventId = input.eventId?.trim() ?? "";
+  const eventSlug = input.eventSlug?.trim() ?? "";
+
+  if (!eventId && !eventSlug) {
+    return null;
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const query = supabase.from("watch_events").select(WATCH_EVENT_LIFECYCLE_SELECT).limit(1);
+  const { data, error } = eventId
+    ? await query.eq("id", eventId).maybeSingle()
+    : await query.eq("slug", eventSlug).maybeSingle();
+
+  if (error && error.code !== "PGRST116") {
+    throw new Error(`Failed to resolve watch event: ${error.message}`);
+  }
+
+  return data ? mapWatchEventLifecycle(data as WatchEventLifecycleRow) : null;
+}
+
+export function getWatchEventInteractionError(
+  event: Pick<WatchEventLifecycleRecord, "phase">,
+  input: {
+    actorType: WatchEventActorType;
+    kind: WatchEventInteractionKind;
+  },
+) {
+  if (input.kind === "replay-interest") {
+    if (event.phase === "scheduled" || event.phase === "live") {
+      return {
+        statusCode: 409,
+        error: "Replay requests open after the live premiere ends.",
+      };
+    }
+
+    return null;
+  }
+
+  if (event.phase === "ended") {
+    return {
+      statusCode: 409,
+      error:
+        input.kind === "presence"
+          ? "This room is now in replay mode. Live presence is closed."
+          : input.actorType === "agent"
+            ? "This room is now in replay mode. Companion posting is closed."
+            : "This room is now in replay mode. Live chat is closed.",
+    };
+  }
+
+  if (event.phase === "cancelled") {
+    return {
+      statusCode: 409,
+      error:
+        input.actorType === "agent"
+          ? "Cancelled rooms do not accept companion activity."
+          : "Cancelled rooms do not accept live room activity.",
+    };
+  }
+
+  return null;
+}
+
+export async function upsertHumanWatchEventAttendee(input: {
+  event: Pick<WatchEventLifecycleRecord, "id" | "hostProfileId">;
+  profileId: string;
+  displayName: string;
+  presenceState: WatchPresenceState;
+}) {
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("watch_event_attendees")
+    .upsert(
+      {
+        event_id: input.event.id,
+        profile_id: input.profileId,
+        attendee_type: "human",
+        display_name: input.displayName,
+        agent_slug: null,
+        presence_state: input.presenceState,
+        trust_level: null,
+        is_official_creator_agent: false,
+        is_host: input.event.hostProfileId === input.profileId,
+        last_seen_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "event_id,profile_id",
+      },
+    )
+    .select(
+      "id, event_id, attendee_type, display_name, profile_id, agent_slug, presence_state, trust_level, is_official_creator_agent, is_host, joined_at, last_seen_at, agent_id",
+    )
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error(`Failed to upsert human watch attendee: ${error?.message ?? "upsert-failed"}`);
+  }
+
+  return data as WatchEventAttendeeRow;
+}
+
+export async function upsertAgentWatchEventAttendee(input: {
+  event: Pick<WatchEventLifecycleRecord, "id" | "officialAgentId">;
+  agentId: string;
+  agentSlug: string;
+  displayName: string;
+  presenceState: WatchPresenceState;
+  trustLevel: WatchEventAgent["trustLevel"];
+  isOfficialCreatorAgent: boolean;
+}) {
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("watch_event_attendees")
+    .upsert(
+      {
+        event_id: input.event.id,
+        agent_id: input.agentId,
+        agent_slug: input.agentSlug,
+        attendee_type: "agent",
+        display_name: input.displayName,
+        presence_state: input.presenceState,
+        trust_level: input.trustLevel,
+        is_official_creator_agent: input.isOfficialCreatorAgent,
+        is_host: input.event.officialAgentId === input.agentId,
+        last_seen_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "event_id,agent_id",
+      },
+    )
+    .select(
+      "id, event_id, attendee_type, display_name, profile_id, agent_slug, presence_state, trust_level, is_official_creator_agent, is_host, joined_at, last_seen_at, agent_id",
+    )
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error(`Failed to upsert agent watch attendee: ${error?.message ?? "upsert-failed"}`);
+  }
+
+  return data as WatchEventAttendeeRow;
+}
+
+export async function finalizeWatchEventActivity(
+  eventId: string,
+  options?: {
+    refreshPeaks?: boolean;
+    captureSnapshot?: boolean;
+  },
+) {
+  const refreshPeaks = options?.refreshPeaks ?? true;
+  const captureSnapshot = options?.captureSnapshot ?? true;
+
+  if (captureSnapshot) {
+    await captureWatchEventAnalyticsSnapshot(eventId);
+    return;
+  }
+
+  if (refreshPeaks) {
+    await refreshWatchEventPeakCounts(eventId);
+  }
+}
+
+export async function getWatchEventModeratorContext(eventId: string) {
+  const { profile } = await getCurrentSessionProfile();
+
+  if (!profile) {
+    return { profile: null, event: null } as const;
+  }
+
+  const event = await resolveWatchEventRecord({ eventId });
+
+  if (!event) {
+    return { profile, event: null } as const;
+  }
+
+  if (profile.role !== "admin" && event.hostProfileId !== profile.id) {
+    return { profile: null, event: null } as const;
+  }
+
+  return { profile, event } as const;
+}
+
+export function getWatchEventHostMutationError(
+  event: Pick<WatchEventLifecycleRecord, "phase">,
+  action: "update-schedule" | "start-now" | "end-now" | "cancel",
+) {
+  if (action === "update-schedule") {
+    if (event.phase === "ended") {
+      return "Ended rooms can be polished, but not rescheduled.";
+    }
+
+    return null;
+  }
+
+  if (action === "start-now") {
+    if (event.phase === "live") {
+      return "This room is already live.";
+    }
+
+    if (event.phase === "ended") {
+      return "Ended rooms cannot be restarted.";
+    }
+
+    if (event.phase === "cancelled") {
+      return "Reschedule this room before starting it again.";
+    }
+
+    return null;
+  }
+
+  if (action === "end-now") {
+    return event.phase === "live" ? null : "Only live rooms can be ended.";
+  }
+
+  if (event.phase === "ended") {
+    return "Ended rooms cannot be cancelled.";
+  }
+
+  if (event.phase === "cancelled") {
+    return "This room is already cancelled.";
+  }
+
+  return null;
+}
+
+export function buildScheduledWatchEventLifecycle(
+  startsAtIso: string,
+  endsAtIso: string,
+  now = new Date(),
+) {
+  const nextPhase = getWatchEventPhase("scheduled", startsAtIso, endsAtIso, now);
+
+  return {
+    starts_at: startsAtIso,
+    ends_at: endsAtIso,
+    status: nextPhase === "live" ? ("live" satisfies WatchEventStatus) : ("scheduled" satisfies WatchEventStatus),
+    actual_started_at: nextPhase === "live" ? startsAtIso : null,
+    actual_ended_at: null,
+    cancelled_at: null,
+  };
+}
+
+export function buildUpdatedWatchEventLifecycle(
+  event: Pick<
+    WatchEventLifecycleRecord,
+    "phase" | "status" | "startsAt" | "endsAt" | "actualStartedAt" | "actualEndedAt" | "cancelledAt"
+  >,
+  startsAtIso: string,
+  endsAtIso: string,
+  now = new Date(),
+) {
+  if (event.phase === "scheduled" || event.phase === "cancelled") {
+    const nextPhase = getWatchEventPhase("scheduled", startsAtIso, endsAtIso, now);
+
+    return {
+      starts_at: startsAtIso,
+      ends_at: endsAtIso,
+      status: nextPhase === "live" ? ("live" satisfies WatchEventStatus) : ("scheduled" satisfies WatchEventStatus),
+      actual_started_at: nextPhase === "live" ? event.actualStartedAt ?? startsAtIso : null,
+      actual_ended_at: null,
+      cancelled_at: null,
+    };
+  }
+
+  if (event.phase === "live") {
+    return {
+      starts_at: event.startsAt,
+      ends_at: endsAtIso,
+      status: "live" satisfies WatchEventStatus,
+      actual_started_at: event.actualStartedAt ?? event.startsAt,
+      actual_ended_at: null,
+      cancelled_at: null,
+    };
+  }
+
+  return {
+    starts_at: event.startsAt,
+    ends_at: event.actualEndedAt ?? event.endsAt,
+    status: "ended" satisfies WatchEventStatus,
+    actual_started_at: event.actualStartedAt,
+    actual_ended_at: event.actualEndedAt ?? event.endsAt,
+    cancelled_at: event.cancelledAt,
+  };
 }
 
 export function isActiveWatchAttendee(lastSeenAt: string, now = new Date()) {
@@ -341,11 +900,64 @@ function mapMessage(
   };
 }
 
+function mapAnalyticsSnapshot(
+  row: WatchEventAnalyticsSnapshotRow,
+): WatchEventAnalyticsSnapshot {
+  return {
+    id: row.id,
+    eventId: row.event_id,
+    humanCount: row.human_count,
+    agentCount: row.agent_count,
+    totalMessageCount: row.total_message_count,
+    replayInterestCount: row.replay_interest_count,
+    shareCount: row.share_count,
+    capturedAt: row.captured_at,
+  };
+}
+
+function mapReplayHighlight(
+  row: WatchEventReplayHighlightRow,
+): WatchEventReplayHighlight {
+  return {
+    id: row.id,
+    eventId: row.event_id,
+    sourceMessageId: row.source_message_id,
+    sourceAuthorType: row.source_author_type,
+    sourceDisplayName: row.source_display_name,
+    sourceBody: row.source_body,
+    title: row.title,
+    note: row.note,
+    createdByProfileId: row.created_by_profile_id,
+    createdByDisplayName: row.created_by_display_name,
+    highlightedAt: row.highlighted_at,
+  };
+}
+
+function mapModerationEntry(
+  row: WatchEventModerationEntryRow,
+): WatchEventModerationEntry {
+  return {
+    id: row.id,
+    eventId: row.event_id,
+    actorProfileId: row.actor_profile_id,
+    actorDisplayName: row.actor_display_name,
+    action: row.action,
+    targetProfileId: row.target_profile_id,
+    targetMessageId: row.target_message_id,
+    targetDisplayName: row.target_display_name,
+    reason: row.reason,
+    metadata: row.metadata ?? {},
+    createdAt: row.created_at,
+  };
+}
+
 function createEmptyAnalytics(): WatchEventAnalytics {
   return {
     peakHumanCount: 0,
     peakAgentCount: 0,
     totalMessages: 0,
+    humanMessageCount: 0,
+    agentMessageCount: 0,
     replayInterestCount: 0,
     shareCount: 0,
   };
@@ -486,7 +1098,7 @@ async function getWatchEventAnalyticsMap(eventRows: WatchEventRow[]) {
   const [messagesResult, replayResult, shareResult] = await Promise.all([
     supabase
       .from("watch_event_messages")
-      .select("event_id")
+      .select("event_id, author_type")
       .in("event_id", eventIds),
     supabase
       .from("watch_event_replay_interests")
@@ -515,15 +1127,22 @@ async function getWatchEventAnalyticsMap(eventRows: WatchEventRow[]) {
       peakHumanCount: row.peak_human_count ?? 0,
       peakAgentCount: row.peak_agent_count ?? 0,
       totalMessages: 0,
+      humanMessageCount: 0,
+      agentMessageCount: 0,
       replayInterestCount: 0,
       shareCount: 0,
     });
   }
 
-  for (const row of messagesResult.data ?? []) {
+  for (const row of (messagesResult.data ?? []) as WatchEventAnalyticsMessageRow[]) {
     const eventId = row.event_id as string;
     const current = analyticsMap.get(eventId) ?? createEmptyAnalytics();
     current.totalMessages += 1;
+    if (row.author_type === "agent") {
+      current.agentMessageCount += 1;
+    } else {
+      current.humanMessageCount += 1;
+    }
     analyticsMap.set(eventId, current);
   }
 
@@ -542,6 +1161,103 @@ async function getWatchEventAnalyticsMap(eventRows: WatchEventRow[]) {
   }
 
   return analyticsMap;
+}
+
+async function getWatchEventAnalyticsHistoryMap(eventIds: string[], limitPerEvent = 12) {
+  const historyMap = new Map<string, WatchEventAnalyticsSnapshot[]>();
+
+  if (!eventIds.length) {
+    return historyMap;
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("watch_event_analytics_snapshots")
+    .select("id, event_id, human_count, agent_count, total_message_count, replay_interest_count, share_count, captured_at")
+    .in("event_id", eventIds)
+    .order("captured_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to load watch-event analytics history: ${error.message}`);
+  }
+
+  for (const row of (data ?? []) as WatchEventAnalyticsSnapshotRow[]) {
+    const list = historyMap.get(row.event_id) ?? [];
+    if (list.length >= limitPerEvent) {
+      continue;
+    }
+
+    list.push(mapAnalyticsSnapshot(row));
+    historyMap.set(row.event_id, list);
+  }
+
+  for (const [eventId, snapshots] of historyMap.entries()) {
+    historyMap.set(eventId, [...snapshots].reverse());
+  }
+
+  return historyMap;
+}
+
+async function getWatchEventReplayHighlightsMap(eventIds: string[], limitPerEvent = 10) {
+  const highlightMap = new Map<string, WatchEventReplayHighlight[]>();
+
+  if (!eventIds.length) {
+    return highlightMap;
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("watch_event_replay_highlights")
+    .select("id, event_id, source_message_id, source_author_type, source_display_name, source_body, title, note, created_by_profile_id, created_by_display_name, highlighted_at")
+    .in("event_id", eventIds)
+    .order("highlighted_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to load watch-event replay highlights: ${error.message}`);
+  }
+
+  for (const row of (data ?? []) as WatchEventReplayHighlightRow[]) {
+    const list = highlightMap.get(row.event_id) ?? [];
+    if (list.length >= limitPerEvent) {
+      continue;
+    }
+
+    list.push(mapReplayHighlight(row));
+    highlightMap.set(row.event_id, list);
+  }
+
+  return highlightMap;
+}
+
+async function getWatchEventModerationHistoryMap(eventIds: string[], limitPerEvent = 12) {
+  const historyMap = new Map<string, WatchEventModerationEntry[]>();
+
+  if (!eventIds.length) {
+    return historyMap;
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("watch_event_moderation_history")
+    .select("id, event_id, actor_profile_id, actor_display_name, action, target_profile_id, target_message_id, target_display_name, reason, metadata, created_at")
+    .in("event_id", eventIds)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to load watch-event moderation history: ${error.message}`);
+  }
+
+  for (const row of (data ?? []) as WatchEventModerationEntryRow[]) {
+    const list = historyMap.get(row.event_id) ?? [];
+    if (list.length >= limitPerEvent) {
+      continue;
+    }
+
+    list.push(mapModerationEntry(row));
+    historyMap.set(row.event_id, list);
+  }
+
+  return historyMap;
 }
 
 export async function refreshWatchEventPeakCounts(eventId: string) {
@@ -595,18 +1311,147 @@ export async function refreshWatchEventPeakCounts(eventId: string) {
   };
 }
 
+export async function captureWatchEventAnalyticsSnapshot(eventId: string) {
+  const supabase = createSupabaseAdminClient();
+  const [presence, messagesResult, replayResult, shareResult, latestSnapshotResult] = await Promise.all([
+    refreshWatchEventPeakCounts(eventId),
+    supabase.from("watch_event_messages").select("id", { count: "exact", head: true }).eq("event_id", eventId),
+    supabase.from("watch_event_replay_interests").select("id", { count: "exact", head: true }).eq("event_id", eventId),
+    supabase.from("share_events").select("id", { count: "exact", head: true }).eq("watch_event_id", eventId),
+    supabase
+      .from("watch_event_analytics_snapshots")
+      .select("id, human_count, agent_count, total_message_count, replay_interest_count, share_count, captured_at")
+      .eq("event_id", eventId)
+      .order("captured_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  if (messagesResult.error || replayResult.error || shareResult.error) {
+    throw new Error("Failed to capture watch-event analytics snapshot.");
+  }
+
+  if (latestSnapshotResult.error && latestSnapshotResult.error.code !== "PGRST116") {
+    throw new Error(`Failed to read the latest watch-event analytics snapshot: ${latestSnapshotResult.error.message}`);
+  }
+
+  const nextSnapshot = {
+    human_count: presence.currentHumanCount,
+    agent_count: presence.currentAgentCount,
+    total_message_count: messagesResult.count ?? 0,
+    replay_interest_count: replayResult.count ?? 0,
+    share_count: shareResult.count ?? 0,
+  };
+
+  const latestSnapshot = latestSnapshotResult.data as
+    | {
+        id: string;
+        human_count: number;
+        agent_count: number;
+        total_message_count: number;
+        replay_interest_count: number;
+        share_count: number;
+        captured_at: string;
+      }
+    | null;
+
+  if (latestSnapshot) {
+    const withinRecentWindow =
+      Date.now() - new Date(latestSnapshot.captured_at).getTime() < 1000 * 60 * 2;
+    const unchanged =
+      latestSnapshot.human_count === nextSnapshot.human_count &&
+      latestSnapshot.agent_count === nextSnapshot.agent_count &&
+      latestSnapshot.total_message_count === nextSnapshot.total_message_count &&
+      latestSnapshot.replay_interest_count === nextSnapshot.replay_interest_count &&
+      latestSnapshot.share_count === nextSnapshot.share_count;
+
+    if (withinRecentWindow && unchanged) {
+      return latestSnapshot.id;
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("watch_event_analytics_snapshots")
+    .insert({
+      event_id: eventId,
+      ...nextSnapshot,
+      captured_at: new Date().toISOString(),
+    })
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error(`Failed to persist watch-event analytics snapshot: ${error?.message ?? "insert-failed"}`);
+  }
+
+  return data.id as string;
+}
+
+export async function logWatchEventModerationAction(input: {
+  eventId: string;
+  actorProfileId: string;
+  actorDisplayName: string;
+  action: WatchEventModerationAction;
+  reason?: string | null;
+  targetProfileId?: string | null;
+  targetMessageId?: string | null;
+  targetDisplayName?: string | null;
+  metadata?: Record<string, unknown>;
+}) {
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("watch_event_moderation_history")
+    .insert({
+      event_id: input.eventId,
+      actor_profile_id: input.actorProfileId,
+      actor_display_name: input.actorDisplayName,
+      action: input.action,
+      reason: input.reason ?? null,
+      target_profile_id: input.targetProfileId ?? null,
+      target_message_id: input.targetMessageId ?? null,
+      target_display_name: input.targetDisplayName ?? null,
+      metadata: input.metadata ?? {},
+    })
+    .select("id, event_id, actor_profile_id, actor_display_name, action, target_profile_id, target_message_id, target_display_name, reason, metadata, created_at")
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error(`Failed to log watch-event moderation history: ${error?.message ?? "insert-failed"}`);
+  }
+
+  return mapModerationEntry(data as WatchEventModerationEntryRow);
+}
+
 function buildSummary(
   row: WatchEventRow,
   film: WatchEventFilm,
   officialAgent: WatchEventAgent | null,
   attendees: WatchEventAttendee[],
   analytics: WatchEventAnalytics = createEmptyAnalytics(),
+  analyticsHistory: WatchEventAnalyticsSnapshot[] = [],
+  replayHighlights: WatchEventReplayHighlight[] = [],
+  moderationHistory: WatchEventModerationEntry[] = [],
 ): WatchEventSummary {
   const phase = getWatchEventPhase(row.status, row.starts_at, row.ends_at);
   const humanAttendees = attendees.filter((attendee) => attendee.attendeeType === "human");
   const agentAttendees = attendees.filter((attendee) => attendee.attendeeType === "agent");
   const liveHumanCount = humanAttendees.filter((attendee) => isActiveWatchAttendee(attendee.lastSeenAt)).length;
   const liveAgentCount = agentAttendees.filter((attendee) => isActiveWatchAttendee(attendee.lastSeenAt)).length;
+  const latestSnapshot = analyticsHistory.at(-1) ?? null;
+  const topReplayHighlight = replayHighlights[0] ?? null;
+  const latestModerationEntry = moderationHistory[0] ?? null;
+  const latestActivityAt =
+    [
+      latestSnapshot?.capturedAt,
+      topReplayHighlight?.highlightedAt,
+      latestModerationEntry?.createdAt,
+      row.actual_ended_at,
+      row.cancelled_at,
+      row.actual_started_at,
+      row.starts_at,
+    ]
+      .filter(Boolean)
+      .sort((a, b) => new Date(b!).getTime() - new Date(a!).getTime())[0] ?? row.starts_at;
 
   return {
     id: row.id,
@@ -630,7 +1475,88 @@ function buildSummary(
     liveHumanCount,
     liveAgentCount,
     analytics,
+    latestSnapshot,
+    latestActivityAt,
+    topReplayHighlight,
+    latestModerationEntry,
+    replayHighlightCount: replayHighlights.length,
+    moderationActionCount: moderationHistory.length,
   };
+}
+
+type WatchEventSummaryHydrationOptions = {
+  historyLimit?: number;
+  replayLimit?: number;
+  moderationLimit?: number;
+};
+
+async function hydrateWatchEventSummaries(
+  rows: WatchEventRow[],
+  options: WatchEventSummaryHydrationOptions = {},
+) {
+  if (!rows.length) {
+    return [] as WatchEventSummary[];
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const historyLimit = options.historyLimit ?? 4;
+  const replayLimit = options.replayLimit ?? 3;
+  const moderationLimit = options.moderationLimit ?? 3;
+
+  const [
+    { data: attendeeData, error: attendeeError },
+    filmMap,
+    agentMap,
+    mutedProfileIdsByEvent,
+    analyticsMap,
+    analyticsHistoryMap,
+    replayHighlightsMap,
+    moderationHistoryMap,
+  ] = await Promise.all([
+    supabase
+      .from("watch_event_attendees")
+      .select("id, event_id, attendee_type, display_name, profile_id, agent_slug, presence_state, trust_level, is_official_creator_agent, is_host, joined_at, last_seen_at, agent_id")
+      .in("event_id", rows.map((row) => row.id)),
+    getFilmMapByIds([...new Set(rows.map((row) => row.film_id))]),
+    getAgentMapByIds([...new Set(rows.map((row) => row.official_agent_id).filter(Boolean) as string[])]),
+    getMutedProfileIdsByEvent(rows.map((row) => row.id)),
+    getWatchEventAnalyticsMap(rows),
+    getWatchEventAnalyticsHistoryMap(rows.map((row) => row.id), historyLimit),
+    getWatchEventReplayHighlightsMap(rows.map((row) => row.id), replayLimit),
+    getWatchEventModerationHistoryMap(rows.map((row) => row.id), moderationLimit),
+  ]);
+
+  if (attendeeError) {
+    throw new Error(`Failed to load public watch-event attendees: ${attendeeError.message}`);
+  }
+
+  const attendeesByEvent = new Map<string, WatchEventAttendee[]>();
+  for (const attendeeRow of (attendeeData ?? []) as WatchEventAttendeeRow[]) {
+    const list = attendeesByEvent.get(attendeeRow.event_id) ?? [];
+    list.push(mapAttendee(attendeeRow, mutedProfileIdsByEvent.get(attendeeRow.event_id) ?? new Set()));
+    attendeesByEvent.set(attendeeRow.event_id, list);
+  }
+
+  return rows
+    .map((row) => {
+      const film = filmMap.get(row.film_id);
+
+      if (!film) {
+        return null;
+      }
+
+      return buildSummary(
+        row,
+        film,
+        mapAgent(row.official_agent_id ? agentMap.get(row.official_agent_id) ?? null : null),
+        attendeesByEvent.get(row.id) ?? [],
+        analyticsMap.get(row.id) ?? createEmptyAnalytics(),
+        analyticsHistoryMap.get(row.id) ?? [],
+        replayHighlightsMap.get(row.id) ?? [],
+        moderationHistoryMap.get(row.id) ?? [],
+      );
+    })
+    .filter((event): event is WatchEventSummary => Boolean(event));
 }
 
 export async function createUniqueWatchEventSlug(baseName: string) {
@@ -710,47 +1636,11 @@ export async function getCreatorWatchEventStudioData(profileId: string, creatorI
       events: [],
     };
   }
-
-  const [filmMap, agentMap, attendeeRowsResult, mutedProfileIdsByEvent, analyticsMap] = await Promise.all([
-    getFilmMapByIds([...new Set(rows.map((row) => row.film_id))]),
-    getAgentMapByIds([...new Set(rows.map((row) => row.official_agent_id).filter(Boolean) as string[])]),
-    supabase
-      .from("watch_event_attendees")
-      .select("id, event_id, attendee_type, display_name, profile_id, agent_slug, presence_state, trust_level, is_official_creator_agent, is_host, joined_at, last_seen_at, agent_id")
-      .in("event_id", rows.map((row) => row.id)),
-    getMutedProfileIdsByEvent(rows.map((row) => row.id)),
-    getWatchEventAnalyticsMap(rows),
-  ]);
-
-  if (attendeeRowsResult.error) {
-    throw new Error(`Failed to load watch-event attendees: ${attendeeRowsResult.error.message}`);
-  }
-
-  const attendeeRows = (attendeeRowsResult.data ?? []) as WatchEventAttendeeRow[];
-  const attendeesByEvent = new Map<string, WatchEventAttendee[]>();
-  for (const attendeeRow of attendeeRows) {
-    const list = attendeesByEvent.get(attendeeRow.event_id) ?? [];
-    list.push(mapAttendee(attendeeRow, mutedProfileIdsByEvent.get(attendeeRow.event_id) ?? new Set()));
-    attendeesByEvent.set(attendeeRow.event_id, list);
-  }
-
-  const events = rows
-    .map((row) => {
-      const film = filmMap.get(row.film_id);
-
-      if (!film) {
-        return null;
-      }
-
-      return buildSummary(
-        row,
-        film,
-        mapAgent(row.official_agent_id ? agentMap.get(row.official_agent_id) ?? null : null),
-        attendeesByEvent.get(row.id) ?? [],
-        analyticsMap.get(row.id) ?? createEmptyAnalytics(),
-      );
-    })
-    .filter((event): event is WatchEventSummary => Boolean(event));
+  const events = await hydrateWatchEventSummaries(rows, {
+    historyLimit: 8,
+    replayLimit: 4,
+    moderationLimit: 6,
+  });
 
   return {
     acceptedFilms,
@@ -779,7 +1669,15 @@ export async function getPublicWatchEventBySlug(slug: string): Promise<WatchEven
   }
 
   const eventRow = data as WatchEventRow;
-  const [{ data: attendeeData, error: attendeeError }, { data: messageData, error: messageError }, mutedProfileIdsByEvent, analyticsMap] = await Promise.all([
+  const [
+    { data: attendeeData, error: attendeeError },
+    { data: messageData, error: messageError },
+    mutedProfileIdsByEvent,
+    analyticsMap,
+    analyticsHistoryMap,
+    replayHighlightsMap,
+    moderationHistoryMap,
+  ] = await Promise.all([
     supabase
       .from("watch_event_attendees")
       .select("id, event_id, attendee_type, display_name, profile_id, agent_slug, presence_state, trust_level, is_official_creator_agent, is_host, joined_at, last_seen_at, agent_id")
@@ -793,6 +1691,9 @@ export async function getPublicWatchEventBySlug(slug: string): Promise<WatchEven
       .limit(60),
     getMutedProfileIdsByEvent([eventRow.id]),
     getWatchEventAnalyticsMap([eventRow]),
+    getWatchEventAnalyticsHistoryMap([eventRow.id], 14),
+    getWatchEventReplayHighlightsMap([eventRow.id], 8),
+    getWatchEventModerationHistoryMap([eventRow.id], 12),
   ]);
 
   if (attendeeError) {
@@ -829,12 +1730,18 @@ export async function getPublicWatchEventBySlug(slug: string): Promise<WatchEven
 
   const attendees = attendeeRows.map((row) => mapAttendee(row, mutedProfileIdsByEvent.get(eventRow.id) ?? new Set()));
   const messages = messageRows.map((row) => mapMessage(row));
+  const analyticsHistory = analyticsHistoryMap.get(eventRow.id) ?? [];
+  const replayHighlights = replayHighlightsMap.get(eventRow.id) ?? [];
+  const moderationHistory = moderationHistoryMap.get(eventRow.id) ?? [];
   const summary = buildSummary(
     eventRow,
     film,
     mapAgent(eventRow.official_agent_id ? agentMap.get(eventRow.official_agent_id) ?? null : null),
     attendees,
     analyticsMap.get(eventRow.id) ?? createEmptyAnalytics(),
+    analyticsHistory,
+    replayHighlights,
+    moderationHistory,
   );
 
   const { profile } = await getCurrentSessionProfile();
@@ -857,64 +1764,98 @@ export async function getPublicWatchEventBySlug(slug: string): Promise<WatchEven
       : null,
     attendees,
     messages,
+    analyticsHistory,
+    replayHighlights,
+    moderationHistory,
     canModerate: Boolean(profile && (profile.role === "admin" || profile.id === eventRow.host_profile_id)),
   };
 }
 
-export async function getUpcomingWatchEventForFilm(filmId: string): Promise<WatchEventSummary | null> {
+export async function getPrimaryWatchEventForFilm(filmId: string): Promise<WatchEventSummary | null> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("watch_events")
     .select("id, slug, title, description, film_id, creator_id, host_profile_id, official_agent_id, starts_at, ends_at, status, created_at, actual_started_at, actual_ended_at, cancelled_at, peak_human_count, peak_agent_count")
     .eq("film_id", filmId)
     .order("starts_at", { ascending: true })
-    .limit(6);
+    .limit(12);
 
   if (error) {
     throw new Error(`Failed to load film watch events: ${error.message}`);
   }
 
-  const rows = ((data ?? []) as WatchEventRow[]).filter((row) => {
+  const rows = (data ?? []) as WatchEventRow[];
+  const liveOrScheduled = rows.filter((row) => {
     const phase = getWatchEventPhase(row.status, row.starts_at, row.ends_at);
-    return phase === "scheduled" || phase === "live";
+    return phase === "live" || phase === "scheduled";
+  });
+  const primaryRow = liveOrScheduled[0] ?? rows.at(-1) ?? null;
+
+  if (!primaryRow) {
+    return null;
+  }
+
+  const [event] = await hydrateWatchEventSummaries([primaryRow], {
+    historyLimit: 4,
+    replayLimit: 3,
+    moderationLimit: 3,
   });
 
-  const nextRow = rows[0];
-  if (!nextRow) {
+  return event ?? null;
+}
+
+export async function getUpcomingWatchEventForFilm(filmId: string): Promise<WatchEventSummary | null> {
+  const event = await getPrimaryWatchEventForFilm(filmId);
+  if (!event || (event.phase !== "live" && event.phase !== "scheduled")) {
     return null;
   }
 
-  const [{ data: attendeeData, error: attendeeError }, filmMap, agentMap, mutedProfileIdsByEvent, analyticsMap] = await Promise.all([
-    supabase
-      .from("watch_event_attendees")
-      .select("id, event_id, attendee_type, display_name, profile_id, agent_slug, presence_state, trust_level, is_official_creator_agent, is_host, joined_at, last_seen_at, agent_id")
-      .eq("event_id", nextRow.id),
-    getFilmMapByIds([nextRow.film_id]),
-    getAgentMapByIds(nextRow.official_agent_id ? [nextRow.official_agent_id] : []),
-    getMutedProfileIdsByEvent([nextRow.id]),
-    getWatchEventAnalyticsMap([nextRow]),
-  ]);
+  return event;
+}
 
-  if (attendeeError) {
-    throw new Error(`Failed to load film watch-event attendees: ${attendeeError.message}`);
+export async function getPublicWatchEventsForCreator(
+  creatorId: string,
+  limit = 4,
+): Promise<WatchEventSummary[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("watch_events")
+    .select("id, slug, title, description, film_id, creator_id, host_profile_id, official_agent_id, starts_at, ends_at, status, created_at, actual_started_at, actual_ended_at, cancelled_at, peak_human_count, peak_agent_count")
+    .eq("creator_id", creatorId)
+    .order("starts_at", { ascending: false })
+    .limit(Math.max(limit, 8));
+
+  if (error) {
+    throw new Error(`Failed to load creator watch events: ${error.message}`);
   }
 
-  const film = filmMap.get(nextRow.film_id);
-  if (!film) {
-    return null;
-  }
+  const events = await hydrateWatchEventSummaries((data ?? []) as WatchEventRow[], {
+    historyLimit: 4,
+    replayLimit: 3,
+    moderationLimit: 3,
+  });
 
-  const attendees = ((attendeeData ?? []) as WatchEventAttendeeRow[]).map((row) =>
-    mapAttendee(row, mutedProfileIdsByEvent.get(nextRow.id) ?? new Set()),
-  );
+  const phaseOrder: Record<WatchEventStatus, number> = {
+    live: 0,
+    scheduled: 1,
+    ended: 2,
+    cancelled: 3,
+  };
 
-  return buildSummary(
-    nextRow,
-    film,
-    mapAgent(nextRow.official_agent_id ? agentMap.get(nextRow.official_agent_id) ?? null : null),
-    attendees,
-    analyticsMap.get(nextRow.id) ?? createEmptyAnalytics(),
-  );
+  return [...events]
+    .sort((a, b) => {
+      const phaseDelta = phaseOrder[a.phase] - phaseOrder[b.phase];
+      if (phaseDelta !== 0) {
+        return phaseDelta;
+      }
+
+      if (a.phase === "live" || a.phase === "scheduled") {
+        return new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime();
+      }
+
+      return new Date(b.latestActivityAt).getTime() - new Date(a.latestActivityAt).getTime();
+    })
+    .slice(0, limit);
 }
 
 export async function getPublicWatchEvents(limit?: number): Promise<WatchEventSummary[]> {
@@ -930,57 +1871,18 @@ export async function getPublicWatchEvents(limit?: number): Promise<WatchEventSu
     throw new Error(`Failed to load public watch events: ${error.message}`);
   }
 
-  const rows = (data ?? []) as WatchEventRow[];
-  if (!rows.length) {
-    return [];
-  }
-
-  const [{ data: attendeeData, error: attendeeError }, filmMap, agentMap, mutedProfileIdsByEvent, analyticsMap] = await Promise.all([
-    supabase
-      .from("watch_event_attendees")
-      .select("id, event_id, attendee_type, display_name, profile_id, agent_slug, presence_state, trust_level, is_official_creator_agent, is_host, joined_at, last_seen_at, agent_id")
-      .in("event_id", rows.map((row) => row.id)),
-    getFilmMapByIds([...new Set(rows.map((row) => row.film_id))]),
-    getAgentMapByIds([...new Set(rows.map((row) => row.official_agent_id).filter(Boolean) as string[])]),
-    getMutedProfileIdsByEvent(rows.map((row) => row.id)),
-    getWatchEventAnalyticsMap(rows),
-  ]);
-
-  if (attendeeError) {
-    throw new Error(`Failed to load public watch-event attendees: ${attendeeError.message}`);
-  }
-
-  const attendeesByEvent = new Map<string, WatchEventAttendee[]>();
-  for (const attendeeRow of (attendeeData ?? []) as WatchEventAttendeeRow[]) {
-    const list = attendeesByEvent.get(attendeeRow.event_id) ?? [];
-    list.push(mapAttendee(attendeeRow, mutedProfileIdsByEvent.get(attendeeRow.event_id) ?? new Set()));
-    attendeesByEvent.set(attendeeRow.event_id, list);
-  }
-
-  return rows
-    .map((row) => {
-      const film = filmMap.get(row.film_id);
-
-      if (!film) {
-        return null;
-      }
-
-      return buildSummary(
-        row,
-        film,
-        mapAgent(row.official_agent_id ? agentMap.get(row.official_agent_id) ?? null : null),
-        attendeesByEvent.get(row.id) ?? [],
-        analyticsMap.get(row.id) ?? createEmptyAnalytics(),
-      );
-    })
-    .filter((event): event is WatchEventSummary => Boolean(event));
+  return hydrateWatchEventSummaries((data ?? []) as WatchEventRow[], {
+    historyLimit: 4,
+    replayLimit: 3,
+    moderationLimit: 3,
+  });
 }
 
 export async function getOwnedWatchEventForHost(eventId: string, hostProfileId: string) {
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("watch_events")
-    .select("id, slug, film_id, host_profile_id, status")
+    .select(WATCH_EVENT_LIFECYCLE_SELECT)
     .eq("id", eventId)
     .maybeSingle();
 
@@ -992,13 +1894,7 @@ export async function getOwnedWatchEventForHost(eventId: string, hostProfileId: 
     return null;
   }
 
-  return data as {
-    id: string;
-    slug: string;
-    film_id: string;
-    host_profile_id: string;
-    status: WatchEventStatus;
-  };
+  return mapWatchEventLifecycle(data as WatchEventLifecycleRow);
 }
 
 export async function getActiveWatchEventMute(eventId: string, profileId: string) {

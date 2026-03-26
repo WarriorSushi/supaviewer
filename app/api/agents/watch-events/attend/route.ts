@@ -1,42 +1,22 @@
 import { NextResponse } from "next/server";
 import { authenticateAgentRequest, logAgentRun } from "@/lib/agents";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { refreshWatchEventPeakCounts } from "@/lib/watch-events";
+import {
+  finalizeWatchEventActivity,
+  getWatchEventInteractionError,
+  resolveWatchEventRecord,
+  upsertAgentWatchEventAttendee,
+  type WatchPresenceState,
+} from "@/lib/watch-events";
 
 export const dynamic = "force-dynamic";
 
-const validPresenceStates = new Set([
+const validPresenceStates = new Set<WatchPresenceState>([
   "watching",
   "taking-notes",
   "answering-questions",
   "hosting",
   "away",
 ]);
-
-async function resolveWatchEvent(body: Record<string, unknown>) {
-  const eventId = String(body.event_id ?? "").trim();
-  const eventSlug = String(body.event_slug ?? "").trim();
-  const supabase = createSupabaseAdminClient();
-
-  if (!eventId && !eventSlug) {
-    return null;
-  }
-
-  const query = supabase
-    .from("watch_events")
-    .select("id, official_agent_id")
-    .limit(1);
-
-  const { data, error } = eventId
-    ? await query.eq("id", eventId).maybeSingle()
-    : await query.eq("slug", eventSlug).maybeSingle();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data as { id: string; official_agent_id: string | null } | null;
-}
 
 export async function POST(request: Request) {
   const agentSession = await authenticateAgentRequest("comment");
@@ -49,9 +29,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "This agent is still sandboxed for public lounge presence." }, { status: 403 });
   }
 
+  let body: Record<string, unknown>;
+
   try {
-    const body = (await request.json()) as Record<string, unknown>;
-    const presenceState = String(body.presence_state ?? "watching").trim();
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    await logAgentRun(agentSession.agent.id, "watch-event-attend", "failed", {
+      reason: "invalid-json",
+    });
+
+    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  }
+
+  try {
+    const presenceState = String(body.presence_state ?? "watching").trim() as WatchPresenceState;
 
     if (!validPresenceStates.has(presenceState)) {
       await logAgentRun(agentSession.agent.id, "watch-event-attend", "rejected", {
@@ -61,7 +52,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid presence state." }, { status: 400 });
     }
 
-    const event = await resolveWatchEvent(body);
+    const event = await resolveWatchEventRecord({
+      eventId: String(body.event_id ?? "").trim(),
+      eventSlug: String(body.event_slug ?? "").trim(),
+    });
 
     if (!event) {
       await logAgentRun(agentSession.agent.id, "watch-event-attend", "rejected", {
@@ -71,26 +65,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Watch event not found." }, { status: 404 });
     }
 
-    const supabase = createSupabaseAdminClient();
-    const { error } = await supabase.from("watch_event_attendees").upsert(
-      {
-        event_id: event.id,
-        agent_id: agentSession.agent.id,
-        agent_slug: agentSession.agent.slug,
-        attendee_type: "agent",
-        display_name: agentSession.agent.name,
-        presence_state: presenceState,
-        trust_level: agentSession.agent.trustLevel,
-        is_official_creator_agent: agentSession.agent.isOfficialCreatorAgent,
-        is_host: event.official_agent_id === agentSession.agent.id,
-        last_seen_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "event_id,agent_id",
-      },
-    );
+    const interactionError = getWatchEventInteractionError(event, {
+      actorType: "agent",
+      kind: "presence",
+    });
 
-    if (error) {
+    if (interactionError) {
+      await logAgentRun(agentSession.agent.id, "watch-event-attend", "rejected", {
+        reason: `lifecycle-${event.phase}`,
+      });
+
+      return NextResponse.json({ error: interactionError.error }, { status: interactionError.statusCode });
+    }
+
+    try {
+      await upsertAgentWatchEventAttendee({
+        event,
+        agentId: agentSession.agent.id,
+        agentSlug: agentSession.agent.slug,
+        displayName: agentSession.agent.name,
+        presenceState,
+        trustLevel: agentSession.agent.trustLevel,
+        isOfficialCreatorAgent: agentSession.agent.isOfficialCreatorAgent,
+      });
+    } catch {
       await logAgentRun(agentSession.agent.id, "watch-event-attend", "failed", {
         reason: "upsert-failed",
       });
@@ -98,7 +96,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Agent presence could not be recorded." }, { status: 500 });
     }
 
-    await refreshWatchEventPeakCounts(event.id);
+    await finalizeWatchEventActivity(event.id);
     await logAgentRun(agentSession.agent.id, "watch-event-attend", "created", {
       watchEventId: event.id,
       presenceState,
@@ -107,9 +105,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, watch_event_id: event.id, presence_state: presenceState }, { status: 201 });
   } catch {
     await logAgentRun(agentSession.agent.id, "watch-event-attend", "failed", {
-      reason: "invalid-json",
+      reason: "server-error",
     });
 
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    return NextResponse.json({ error: "Agent presence could not be recorded." }, { status: 500 });
   }
 }

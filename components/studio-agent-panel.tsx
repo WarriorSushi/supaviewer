@@ -6,6 +6,7 @@ import {
   rotateOwnedAgentToken,
   type AgentStudioActionState,
 } from "@/app/studio/actions";
+import type { WatchEventSummary } from "@/lib/watch-events";
 
 type StudioAgent = {
   id: string;
@@ -52,13 +53,22 @@ const idleState: AgentStudioActionState = {
   token: null,
 };
 
-export function StudioAgentPanel({ agents }: { agents: StudioAgent[] }) {
+export function StudioAgentPanel({
+  agents,
+  watchEvents,
+}: {
+  agents: StudioAgent[];
+  watchEvents: WatchEventSummary[];
+}) {
   const [createState, createAction, createPending] = React.useActionState(createOwnedAgent, idleState);
   const [rotateState, rotateAction, rotatePending] = React.useActionState(rotateOwnedAgentToken, idleState);
+  const liveCompanionRooms = watchEvents.filter((event) => event.phase === "live" && event.officialAgent).length;
+  const scheduledCompanionRooms = watchEvents.filter((event) => event.phase === "scheduled" && event.officialAgent).length;
+  const roomsMissingCompanion = watchEvents.filter((event) => !event.officialAgent).length;
 
   return (
     <div className="grid gap-6">
-      <div className="sv-surface rounded-[1.8rem] p-6">
+      <div className="rounded-xl border border-border/50 bg-card p-6">
         <p className="sv-overline">Agent lobby</p>
         <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <form action={createAction} className="grid gap-4">
@@ -86,21 +96,21 @@ export function StudioAgentPanel({ agents }: { agents: StudioAgent[] }) {
               </label>
               <div className="grid gap-2">
                 <span className="sv-field-label">Capabilities</span>
-                <label className="sv-surface-soft flex items-center gap-3 rounded-[1rem] px-4 py-3 text-sm text-muted-foreground">
+                <label className="flex items-center gap-3 rounded-xl border border-border/50 bg-card/60 px-4 py-3 text-sm text-muted-foreground">
                   <input defaultChecked name="capabilities" type="checkbox" value="submit_drafts" />
                   submit drafts
                 </label>
-                <label className="sv-surface-soft flex items-center gap-3 rounded-[1rem] px-4 py-3 text-sm text-muted-foreground">
+                <label className="flex items-center gap-3 rounded-xl border border-border/50 bg-card/60 px-4 py-3 text-sm text-muted-foreground">
                   <input name="capabilities" type="checkbox" value="comment" />
                   agent replies
                 </label>
-                <label className="sv-surface-soft flex items-center gap-3 rounded-[1rem] px-4 py-3 text-sm text-muted-foreground">
+                <label className="flex items-center gap-3 rounded-xl border border-border/50 bg-card/60 px-4 py-3 text-sm text-muted-foreground">
                   <input name="capabilities" type="checkbox" value="react" />
                   agent reactions
                 </label>
               </div>
             </div>
-            <label className="sv-surface-soft flex items-start gap-3 rounded-[1.2rem] px-4 py-4 text-sm text-muted-foreground">
+            <label className="flex items-start gap-3 rounded-xl border border-border/50 bg-card/60 px-4 py-4 text-sm text-muted-foreground">
               <input className="mt-1" name="isOfficialCreatorAgent" type="checkbox" />
               <span>Mark as the official creator companion for your public profile and watch pages.</span>
             </label>
@@ -110,7 +120,7 @@ export function StudioAgentPanel({ agents }: { agents: StudioAgent[] }) {
           </form>
 
           <div className="grid gap-4">
-            <div className="sv-surface-soft rounded-[1.3rem] px-4 py-4">
+            <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
               <p className="sv-overline">Copy-paste prompt</p>
               <pre className="mt-3 overflow-x-auto whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
 {`You are being connected to Supaviewer, a catalog and watch platform for AI-native films.
@@ -126,7 +136,16 @@ Then:
 5. Report back with any review URL the human should open`}
               </pre>
             </div>
-            <div className="sv-surface-soft rounded-[1.3rem] px-4 py-4">
+            <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
+              <p className="sv-overline">Companion posture</p>
+              <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
+                <div>{liveCompanionRooms} live room{liveCompanionRooms === 1 ? "" : "s"} currently have an official companion attached.</div>
+                <div>{scheduledCompanionRooms} scheduled room{scheduledCompanionRooms === 1 ? "" : "s"} already have a companion lined up.</div>
+                <div>{roomsMissingCompanion} room{roomsMissingCompanion === 1 ? "" : "s"} still need a companion if you want guided Q&A instead of generic noise.</div>
+                <div>Companions should answer when invited, not narrate continuously over the human rail.</div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
               <p className="sv-overline">Security posture</p>
               <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
                 <div>Tokens are shown once and stored server-side as hashes only.</div>
@@ -141,11 +160,11 @@ Then:
         </div>
       </div>
 
-      <div className="sv-surface rounded-[1.8rem] p-6">
+      <div className="rounded-xl border border-border/50 bg-card p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="sv-overline">Registered agents</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-foreground">Creator-owned identities</h2>
+            <h2 className="mt-2 font-display text-2xl font-medium text-foreground">Creator-owned identities</h2>
           </div>
           <span className="sv-chip">{agents.length} active</span>
         </div>
@@ -153,17 +172,26 @@ Then:
           {agents.length ? (
             agents.map((agent) => {
               const activeCredential = agent.credentials.find((credential) => !credential.revokedAt) ?? null;
+              const assignedEvents = watchEvents.filter((event) => event.officialAgent?.id === agent.id);
+              const liveAssignments = assignedEvents.filter((event) => event.phase === "live");
+              const scheduledAssignments = assignedEvents.filter((event) => event.phase === "scheduled");
+              const archiveAssignments = assignedEvents.filter((event) => event.phase === "ended" || event.phase === "cancelled");
+              const nextAssignment = [...assignedEvents].sort(
+                (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+              )[0] ?? null;
+              const canSpeakPublicly =
+                agent.actionReviews.comment.status === "approved" || agent.actionReviews.react.status === "approved";
 
               return (
-                <div key={agent.id} className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                <div key={agent.id} className="rounded-xl border border-border/50 bg-card/60 px-5 py-5">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap gap-2">
                         <span className="sv-chip">{agent.trustLevel}</span>
                         {agent.isOfficialCreatorAgent ? <span className="sv-chip">official creator agent</span> : null}
                       </div>
-                      <h3 className="mt-3 text-xl font-semibold tracking-[-0.03em] text-foreground">{agent.name}</h3>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{agent.description}</p>
+                      <h3 className="mt-3 font-display text-xl font-medium text-foreground">{agent.name}</h3>
+                      <p className="sv-body mt-2">{agent.description}</p>
                       <p className="mt-3 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-muted-foreground">
                         supaviewer.com/agents/{agent.slug}
                       </p>
@@ -175,21 +203,64 @@ Then:
                         ))}
                       </div>
                       <div className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                        <div className="sv-surface-soft rounded-[1rem] px-4 py-4">
+                        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                           {agent.reputation.totalDrafts} drafts / {agent.reputation.acceptedDrafts} accepted
                         </div>
-                        <div className="sv-surface-soft rounded-[1rem] px-4 py-4">
+                        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                           {agent.reputation.publicReplyCount} replies / {agent.reputation.reactionCount} reactions
                         </div>
                       </div>
+                      <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
+                        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
+                          {liveAssignments.length} live room{liveAssignments.length === 1 ? "" : "s"}
+                        </div>
+                        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
+                          {scheduledAssignments.length} scheduled room{scheduledAssignments.length === 1 ? "" : "s"}
+                        </div>
+                        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
+                          {archiveAssignments.length} archive{archiveAssignments.length === 1 ? "" : "s"}
+                        </div>
+                      </div>
+                      <div className="mt-3 rounded-xl border border-border/50 bg-card/60 px-4 py-4 text-sm text-muted-foreground">
+                        <p className="sv-overline">Companion stance</p>
+                        <p className="mt-2 leading-6 text-foreground">
+                          {assignedEvents.length
+                            ? canSpeakPublicly
+                              ? "Ready to stay quiet by default, then answer only when the room actually needs companion context."
+                              : "Assigned to rooms, but public reply/reaction permissions still need review before this companion should speak live."
+                            : "Not assigned to a room yet. Keep this agent focused on drafts or curation until there is a clear public companion role."}
+                        </p>
+                        {nextAssignment ? (
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                            Next room: <span className="text-foreground">{nextAssignment.title}</span>{" "}
+                            on {new Date(nextAssignment.startsAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+                        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
+                          Public permissions:{" "}
+                          <span className="text-foreground">
+                            {canSpeakPublicly ? "approved to speak in public rooms" : "still pending public room approval"}
+                          </span>
+                        </div>
+                        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
+                          Room assignment state:{" "}
+                          <span className="text-foreground">
+                            {assignedEvents.length
+                              ? `${assignedEvents.length} room assignment${assignedEvents.length === 1 ? "" : "s"} active`
+                              : "no active room assignment"}
+                          </span>
+                        </div>
+                      </div>
                       <div className="mt-3 grid gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground sm:grid-cols-2">
-                        <div className="rounded-[1rem] border border-border/80 bg-background/55 px-4 py-3">
+                        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
                           replies: {agent.actionReviews.comment.status}
                           {agent.actionReviews.comment.requestedAt
                             ? ` / ${new Date(agent.actionReviews.comment.requestedAt).toLocaleDateString("en-US")}`
                             : ""}
                         </div>
-                        <div className="rounded-[1rem] border border-border/80 bg-background/55 px-4 py-3">
+                        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
                           reactions: {agent.actionReviews.react.status}
                           {agent.actionReviews.react.requestedAt
                             ? ` / ${new Date(agent.actionReviews.react.requestedAt).toLocaleDateString("en-US")}`
@@ -199,7 +270,7 @@ Then:
                     </div>
                     <form action={rotateAction} className="grid gap-3 lg:min-w-[18rem]">
                       <input name="agentId" type="hidden" value={agent.id} />
-                      <div className="rounded-[1rem] border border-border/80 bg-background/70 px-4 py-4 text-sm text-muted-foreground">
+                      <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4 text-sm text-muted-foreground">
                         <p className="font-medium text-foreground">
                           {activeCredential ? `Token ${activeCredential.tokenPrefix}` : "No active token"}
                         </p>
@@ -221,7 +292,7 @@ Then:
               );
             })
           ) : (
-            <div className="sv-surface-soft rounded-[1.2rem] px-4 py-5 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-5 text-sm text-muted-foreground">
               No agents yet. Create the first one above and connect it with the hosted docs.
             </div>
           )}
@@ -240,15 +311,15 @@ function ActionMessage({ state }: { state: AgentStudioActionState }) {
   return (
     <div
       className={[
-        "rounded-[1.3rem] border px-4 py-4 text-sm",
+        "rounded-xl border px-4 py-4 text-sm",
         state.status === "success"
-          ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-100"
-          : "border-rose-400/20 bg-rose-400/10 text-rose-100",
+          ? "border-[oklch(0.72_0.14_55_/_20%)] bg-[oklch(0.72_0.14_55_/_6%)] text-foreground"
+          : "border-[oklch(0.72_0.14_55_/_30%)] bg-[oklch(0.72_0.14_55_/_8%)] text-foreground",
       ].join(" ")}
     >
       <p>{state.message}</p>
       {state.token ? (
-        <div className="mt-3 rounded-[1rem] border border-white/10 bg-black/20 px-4 py-4 font-mono text-[0.78rem] text-white/92">
+        <div className="mt-3 rounded-xl border border-border/50 bg-background/70 px-4 py-4 font-mono text-[0.78rem] text-foreground/90">
           {state.token}
         </div>
       ) : null}

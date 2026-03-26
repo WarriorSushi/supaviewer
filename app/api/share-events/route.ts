@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentSessionProfile } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { captureWatchEventAnalyticsSnapshot } from "@/lib/watch-events";
 
 const allowedOrigins = new Set([
   "https://supaviewer.com",
@@ -54,6 +55,10 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: "insert-failed" }, { status: 500 });
+  }
+
+  if (watchEventId) {
+    await captureWatchEventAnalyticsSnapshot(watchEventId);
   }
 
   return NextResponse.json({ ok: true });

@@ -145,11 +145,11 @@ export default async function Home() {
               <p className="sv-overline">Collections</p>
               <h2 className="sv-title mt-2">Curated rails, not feed clutter.</h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-                Each rail now carries real titles, real thumbnails, and a cleaner shelf identity instead of placeholder cards.
+                Three signature shelves, each with its own art direction instead of borrowed video thumbnails.
               </p>
             </div>
           </div>
-          <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:gap-4">
             {collections.map((collection) => (
               <CollectionCard key={collection.slug} collection={collection} />
             ))}

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { getCurrentSessionProfile } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import {
+  finalizeWatchEventActivity,
+  getWatchEventInteractionError,
+  resolveWatchEventRecord,
+} from "@/lib/watch-events";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +30,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Event id is required." }, { status: 400 });
   }
 
+  const event = await resolveWatchEventRecord({ eventId });
+
+  if (!event) {
+    return NextResponse.json({ error: "Watch event not found." }, { status: 404 });
+  }
+
+  const interactionError = getWatchEventInteractionError(event, {
+    actorType: "human",
+    kind: "replay-interest",
+  });
+
+  if (interactionError) {
+    return NextResponse.json({ error: interactionError.error }, { status: interactionError.statusCode });
+  }
+
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.from("watch_event_replay_interests").upsert(
     {
@@ -41,5 +61,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Replay interest could not be recorded." }, { status: 500 });
   }
 
+  await finalizeWatchEventActivity(eventId, { captureSnapshot: true, refreshPeaks: false });
   return NextResponse.json({ ok: true });
 }

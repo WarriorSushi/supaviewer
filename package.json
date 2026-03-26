@@ -8,6 +8,7 @@
     "build": "pnpm exec next build",
     "start": "pnpm exec next start",
     "lint": "pnpm exec eslint",
+    "playwright:cli": "powershell -ExecutionPolicy Bypass -File scripts/playwright-cli.ps1",
     "seed:admin": "node scripts/seed-admin-user.mjs",
     "test:e2e": "pnpm exec playwright test",
     "test:e2e:headed": "pnpm exec playwright test --headed --grep-invert @headless-only"

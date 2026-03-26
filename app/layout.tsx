@@ -14,7 +14,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
-  weight: ["500", "600"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -78,7 +78,7 @@ export default function RootLayout({
         className={`${plusJakartaSans.variable} ${fraunces.variable} ${ibmPlexMono.variable} antialiased`}
       >
         <ThemeProvider>
-          <div className="relative min-h-screen">
+          <div className="relative min-h-screen pb-20 md:pb-0">
             <SiteHeader />
             {children}
             <SiteFooter />

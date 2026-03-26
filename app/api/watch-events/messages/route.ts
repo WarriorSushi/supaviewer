@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { getCurrentSessionProfile } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { getActiveWatchEventMute, refreshWatchEventPeakCounts } from "@/lib/watch-events";
+import {
+  finalizeWatchEventActivity,
+  getActiveWatchEventMute,
+  getWatchEventInteractionError,
+  resolveWatchEventRecord,
+  upsertHumanWatchEventAttendee,
+} from "@/lib/watch-events";
 
 export const dynamic = "force-dynamic";
 
@@ -71,33 +77,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "That message was already posted recently." }, { status: 429 });
   }
 
-  const { data: event, error: eventError } = await supabase
-    .from("watch_events")
-    .select("id, host_profile_id")
-    .eq("id", eventId)
-    .maybeSingle();
+  const event = await resolveWatchEventRecord({ eventId });
 
-  if (eventError || !event) {
+  if (!event) {
     return NextResponse.json({ error: "Watch event not found." }, { status: 404 });
   }
 
-  await supabase.from("watch_event_attendees").upsert(
-    {
-      event_id: eventId,
-      profile_id: profile.id,
-      attendee_type: "human",
-      display_name: profile.displayName,
-      agent_slug: null,
-      presence_state: "watching",
-      trust_level: null,
-      is_official_creator_agent: false,
-      is_host: event.host_profile_id === profile.id,
-      last_seen_at: new Date().toISOString(),
-    },
-    {
-      onConflict: "event_id,profile_id",
-    },
-  );
+  const interactionError = getWatchEventInteractionError(event, {
+    actorType: "human",
+    kind: "message",
+  });
+
+  if (interactionError) {
+    return NextResponse.json({ error: interactionError.error }, { status: interactionError.statusCode });
+  }
+
+  try {
+    await upsertHumanWatchEventAttendee({
+      event,
+      profileId: profile.id,
+      displayName: profile.displayName,
+      presenceState: "watching",
+    });
+  } catch {
+    return NextResponse.json({ error: "Message could not be sent." }, { status: 500 });
+  }
 
   const { data, error } = await supabase
     .from("watch_event_messages")
@@ -118,6 +122,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Message could not be sent." }, { status: 500 });
   }
 
-  await refreshWatchEventPeakCounts(eventId);
+  await finalizeWatchEventActivity(eventId);
   return NextResponse.json({ ok: true, message: data }, { status: 201 });
 }

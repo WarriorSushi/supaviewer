@@ -22,6 +22,11 @@ import { getCurrentSessionProfile } from "@/lib/auth";
 import { buildFilmHref } from "@/lib/catalog";
 import { submissionRejectionReasons } from "@/lib/submissions";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import {
+  buildWatchEventHref,
+  getPublicWatchEvents,
+  getWatchEventStatusLabel,
+} from "@/lib/watch-events";
 
 const visibilityOptions = ["public", "limited", "hidden", "removed"] as const;
 const activityStatuses = ["all", "resolved", "open"] as const;
@@ -212,6 +217,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   if (agentReviewStateResult.error) {
     throw new Error(`Failed to load agent review state: ${agentReviewStateResult.error.message}`);
   }
+
+  const watchRooms = await getPublicWatchEvents(6);
 
   const queuedSubmissions = submissionsResult.data ?? [];
   const claimRequests = claimsResult.data ?? [];
@@ -434,13 +441,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   if (profile?.role !== "admin") {
     if ((adminCount ?? 0) === 0) {
       return (
-        <main className="mx-auto w-full max-w-[100rem] px-4 pb-28 pt-8 sm:px-6 lg:px-10">
-          <section className="sv-page-hero rounded-[1rem] p-6 sm:p-8">
+        <main className="mx-auto w-full max-w-[96rem] px-4 pb-28 pt-8 sm:px-6 lg:px-10">
+          <section className="rounded-xl border border-border/50 bg-card p-6 sm:p-8 sv-animate-in">
             <p className="sv-overline">Admin bootstrap</p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-foreground sm:text-5xl">
+            <h1 className="mt-3 font-display text-4xl font-medium text-foreground sm:text-5xl">
               Claim the first admin seat.
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+            <p className="sv-body mt-4 max-w-2xl">
               This project has no admin yet. The first signed-in operator can initialize the admin
               role once.
             </p>
@@ -458,15 +465,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-[100rem] px-4 pb-28 pt-8 sm:px-6 lg:px-10">
-      <section className="sv-page-hero rounded-[1rem] p-6 sm:p-8">
+    <main className="mx-auto w-full max-w-[96rem] px-4 pb-28 pt-8 sm:px-6 lg:px-10">
+      <section className="rounded-xl border border-border/50 bg-card p-6 sm:p-8 sv-animate-in">
         <p className="sv-overline">Admin</p>
         <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-4xl font-semibold tracking-[-0.05em] text-foreground sm:text-5xl">
+            <h1 className="font-display text-4xl font-medium text-foreground sm:text-5xl">
               Operations and catalog control
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+            <p className="sv-body mt-4 max-w-2xl">
               Moderate submissions, remove harmful comments, manage creator claims, and control film
               visibility without breaking permanent serial history.
             </p>
@@ -478,21 +485,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       </section>
 
       <section className="grid gap-4 py-6 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="sv-surface rounded-[1.3rem] px-5 py-5">
+        <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5 sv-animate-in sv-stagger-1">
           <p className="sv-overline">Pending submissions</p>
-          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{queuedSubmissions.length}</p>
+          <p className="mt-3 font-display text-3xl font-medium text-foreground">{queuedSubmissions.length}</p>
         </div>
-        <div className="sv-surface rounded-[1.3rem] px-5 py-5">
+        <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5 sv-animate-in sv-stagger-2">
           <p className="sv-overline">Public catalog</p>
-          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{filmCountResult.count ?? 0}</p>
+          <p className="mt-3 font-display text-3xl font-medium text-foreground">{filmCountResult.count ?? 0}</p>
         </div>
-        <div className="sv-surface rounded-[1.3rem] px-5 py-5">
+        <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5 sv-animate-in sv-stagger-3">
           <p className="sv-overline">Removed titles</p>
-          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{removedCountResult.count ?? 0}</p>
+          <p className="mt-3 font-display text-3xl font-medium text-foreground">{removedCountResult.count ?? 0}</p>
         </div>
-        <div className="sv-surface rounded-[1.3rem] px-5 py-5">
+        <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5 sv-animate-in sv-stagger-4">
           <p className="sv-overline">Creators / comments</p>
-          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">
+          <p className="mt-3 font-display text-3xl font-medium text-foreground">
             {creatorCountResult.count ?? 0} / {commentCountResult.count ?? 0}
           </p>
         </div>
@@ -500,17 +507,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
       <section className="grid gap-6 py-2 xl:grid-cols-[minmax(0,1.1fr)_minmax(22rem,0.9fr)]">
         <div className="grid gap-6">
-          <div className="sv-surface rounded-[1.6rem] p-6">
+          <div className="rounded-xl border border-border/50 bg-card p-6">
             <div className="mb-5 flex items-end justify-between gap-4">
               <div>
                 <p className="sv-overline">Review queue</p>
-                <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-foreground">
+                <h2 className="mt-2 font-display text-3xl font-medium text-foreground">
                   Submission approvals
                 </h2>
               </div>
               <div className="sv-chip">{queuedSubmissions.length} open</div>
             </div>
-            <form className="sv-surface-soft mb-4 grid gap-3 rounded-[1.2rem] px-4 py-4" id="bulk-submissions-form">
+            <form className="rounded-xl border border-border/50 bg-card/60 mb-4 grid gap-3 rounded-xl px-4 py-4" id="bulk-submissions-form">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-foreground">Bulk submission actions</p>
@@ -558,7 +565,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 queuedSubmissions.map((item) => (
                   <div
                     key={item.id}
-                    className="sv-surface-soft flex flex-col gap-4 rounded-[1.2rem] px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                    className="rounded-xl border border-border/50 bg-card/60 flex flex-col gap-4 rounded-xl px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div>
                       <label className="mb-3 flex items-center gap-3 text-sm text-muted-foreground">
@@ -605,7 +612,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   </div>
                 ))
               ) : (
-                <div className="sv-surface-soft rounded-[1.2rem] px-4 py-5 text-sm text-muted-foreground">
+                <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-5 text-sm text-muted-foreground">
                   No queued submissions right now.
                 </div>
               )}
@@ -633,10 +640,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           </div>
 
-          <div className="sv-surface rounded-[1.6rem] p-6">
+          <div className="rounded-xl border border-border/50 bg-card p-6">
             <div className="mb-5">
               <p className="sv-overline">Catalog controls</p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-foreground">
+              <h2 className="mt-2 font-display text-3xl font-medium text-foreground">
                 Visibility and featuring
               </h2>
             </div>
@@ -645,7 +652,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <form
                   key={film.id}
                   action={updateFilmEditorial.bind(null, film.id as string)}
-                  className="sv-surface-soft grid gap-4 rounded-[1.25rem] px-4 py-4"
+                  className="rounded-xl border border-border/50 bg-card/60 grid gap-4 rounded-xl px-4 py-4"
                 >
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -699,10 +706,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           </div>
 
-          <div className="sv-surface rounded-[1.6rem] p-6">
+          <div className="rounded-xl border border-border/50 bg-card p-6">
             <div className="mb-5">
               <p className="sv-overline">Status awards</p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-foreground">
+              <h2 className="mt-2 font-display text-3xl font-medium text-foreground">
                 Manual trophy assignment
               </h2>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
@@ -723,7 +730,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     <form
                       key={`film-trophy-${film.id}`}
                       action={updateFilmTrophies.bind(null, film.id as string)}
-                      className="sv-surface-soft grid gap-4 rounded-[1.2rem] px-4 py-4"
+                      className="rounded-xl border border-border/50 bg-card/60 grid gap-4 rounded-xl px-4 py-4"
                     >
                       <div>
                         <p className="sv-overline">#{film.serial_number}</p>
@@ -762,7 +769,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     <form
                       key={`creator-trophy-${creator.id}`}
                       action={updateCreatorTrophies.bind(null, creator.id as string, creator.slug as string)}
-                      className="sv-surface-soft grid gap-4 rounded-[1.2rem] px-4 py-4"
+                      className="rounded-xl border border-border/50 bg-card/60 grid gap-4 rounded-xl px-4 py-4"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div>
@@ -798,10 +805,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           </div>
 
-          <div className="sv-surface rounded-[1.6rem] p-6">
+          <div className="rounded-xl border border-border/50 bg-card p-6">
             <div className="mb-5">
               <p className="sv-overline">Agent operations</p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-foreground">
+              <h2 className="mt-2 font-display text-3xl font-medium text-foreground">
                 Trust and curator rails
               </h2>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
@@ -844,7 +851,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     <form
                       key={`agent-controls-${agent.id}`}
                       action={updateAgentModeration.bind(null, agent.id as string, agent.slug as string)}
-                      className="sv-surface-soft grid gap-4 rounded-[1.2rem] px-4 py-4"
+                      className="rounded-xl border border-border/50 bg-card/60 grid gap-4 rounded-xl px-4 py-4"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
@@ -865,16 +872,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         </div>
                       </div>
                       <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-4">
-                        <div className="sv-surface-soft rounded-[1rem] px-4 py-4">
+                        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                           {reputation.totalDrafts} drafts / {reputation.acceptedDrafts} accepted
                         </div>
-                        <div className="sv-surface-soft rounded-[1rem] px-4 py-4">
+                        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                           {reputation.publicReplyCount} replies / {reputation.reactionCount} reactions
                         </div>
-                        <div className="sv-surface-soft rounded-[1rem] px-4 py-4">
+                        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                           {reputation.runCount} logged runs
                         </div>
-                        <div className="sv-surface-soft rounded-[1rem] px-4 py-4">
+                        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                           {reputation.lastSuccessfulRunAt
                             ? `Last success ${new Date(reputation.lastSuccessfulRunAt).toLocaleDateString("en-US")}`
                             : "No successful runs yet"}
@@ -897,7 +904,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                             <option value="disabled">disabled</option>
                           </select>
                         </label>
-                        <label className="flex items-end gap-3 rounded-[1rem] border border-border/80 bg-background/55 px-4 py-3 text-sm text-muted-foreground">
+                        <label className="flex items-end gap-3 rounded-xl border border-border/50 bg-card/60 px-4 py-3 text-sm text-muted-foreground">
                           <input
                             defaultChecked={Boolean(agent.is_official_creator_agent)}
                             name="isOfficialCreatorAgent"
@@ -942,7 +949,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           {collections.map((collection) => (
                             <label
                               key={`${agent.id}-${collection.id}`}
-                              className="flex items-center gap-3 rounded-[1rem] border border-border/80 bg-background/55 px-4 py-3 text-sm text-muted-foreground"
+                              className="flex items-center gap-3 rounded-xl border border-border/50 bg-card/60 px-4 py-3 text-sm text-muted-foreground"
                             >
                               <input
                                 defaultChecked={assignedCollectionIds.has(collection.id as string)}
@@ -967,7 +974,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   );
                 })
               ) : (
-                <div className="sv-surface-soft rounded-[1.2rem] px-4 py-5 text-sm text-muted-foreground">
+                <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-5 text-sm text-muted-foreground">
                   No registered agents yet.
                 </div>
               )}
@@ -976,7 +983,70 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </div>
 
         <div className="grid gap-6">
-          <div className="sv-surface rounded-[1.6rem] p-6">
+          <div className="rounded-xl border border-border/50 bg-card p-6">
+            <div className="mb-5">
+              <p className="sv-overline">Watch room oversight</p>
+              <h2 className="mt-2 font-display text-3xl font-medium text-foreground">
+                Live rooms and replay stewardship
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
+                Track which public watch rooms are live, where moderation is happening, and whether replay/story surfaces are being maintained instead of drifting.
+              </p>
+            </div>
+            <div className="grid gap-3">
+              {watchRooms.length ? (
+                watchRooms.map((room) => (
+                  <div key={room.id} className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap gap-2">
+                          <span className="sv-chip">{getWatchEventStatusLabel(room)}</span>
+                          {room.officialAgent ? <span className="sv-chip">{room.officialAgent.name}</span> : null}
+                        </div>
+                        <p className="mt-3 text-lg font-medium tracking-[-0.02em] text-foreground">{room.title}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          #{room.film.serial} {room.film.title}
+                        </p>
+                      </div>
+                      <a className="sv-btn sv-btn-secondary" href={buildWatchEventHref(room)}>
+                        Open room
+                      </a>
+                    </div>
+                    <div className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-4">
+                      <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
+                        {room.liveHumanCount} humans live / {room.liveAgentCount} agents live
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
+                        {room.replayHighlightCount} replay markers / {room.analytics.replayInterestCount} replay requests
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
+                        {room.moderationActionCount} moderator actions / {room.analytics.shareCount} shares
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
+                        Latest activity {new Date(room.latestActivityAt).toLocaleDateString("en-US")}
+                      </div>
+                    </div>
+                    <div className="mt-3 rounded-xl border border-border/50 bg-card/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
+                      <span className="text-foreground">
+                        {room.latestModerationEntry
+                          ? `${room.latestModerationEntry.actorDisplayName} last touched the room with ${room.latestModerationEntry.action}.`
+                          : "No visible moderation action logged yet."}
+                      </span>{" "}
+                      {room.topReplayHighlight
+                        ? `Top replay lead: ${room.topReplayHighlight.title}.`
+                        : "Replay dossier still needs a lead moment."}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-5 text-sm text-muted-foreground">
+                  No watch rooms yet.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border/50 bg-card p-6">
             <p className="sv-overline">Creator claims</p>
             <div className="mt-4 grid gap-3">
               {claimRequests.length ? (
@@ -987,7 +1057,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   return (
                     <div
                       key={claim.id}
-                      className="sv-surface-soft rounded-[1.2rem] px-4 py-4"
+                      className="rounded-xl border border-border/50 bg-card/60 px-4 py-4"
                     >
                       <div className="flex items-center justify-between gap-4">
                         <div>
@@ -1042,16 +1112,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   );
                 })
               ) : (
-                <div className="sv-surface-soft rounded-[1.2rem] px-4 py-5 text-sm text-muted-foreground">
+                <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-5 text-sm text-muted-foreground">
                   No claim requests yet.
                 </div>
               )}
             </div>
           </div>
 
-          <div className="sv-surface rounded-[1.6rem] p-6">
+          <div className="rounded-xl border border-border/50 bg-card p-6">
             <p className="sv-overline">Comment moderation</p>
-            <form className="sv-surface-soft mt-4 grid gap-3 rounded-[1.2rem] px-4 py-4" id="bulk-comments-form">
+            <form className="rounded-xl border border-border/50 bg-card/60 mt-4 grid gap-3 rounded-xl px-4 py-4" id="bulk-comments-form">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-foreground">Bulk comment actions</p>
@@ -1086,7 +1156,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   return (
                     <div
                       key={comment.id}
-                      className="sv-surface-soft rounded-[1.2rem] px-4 py-4"
+                      className="rounded-xl border border-border/50 bg-card/60 px-4 py-4"
                     >
                       {typeof film?.serial_number === "number" && film?.slug ? (
                         <label className="mb-3 flex items-center gap-3 text-sm text-muted-foreground">
@@ -1136,7 +1206,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   );
                 })
               ) : (
-                <div className="sv-surface-soft rounded-[1.2rem] px-4 py-5 text-sm text-muted-foreground">
+                <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-5 text-sm text-muted-foreground">
                   No recent comments to moderate.
                 </div>
               )}
@@ -1164,22 +1234,22 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
           </div>
 
-          <div className="sv-surface rounded-[1.6rem] p-6">
+          <div className="rounded-xl border border-border/50 bg-card p-6">
             <p className="sv-overline">Moderation rules</p>
             <div className="mt-4 grid gap-3 text-sm text-muted-foreground">
-              <div className="sv-surface-soft rounded-[1.1rem] px-4 py-4">
+              <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                 Removing a film never frees its serial for reuse.
               </div>
-              <div className="sv-surface-soft rounded-[1.1rem] px-4 py-4">
+              <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                 Hidden titles leave browse surfaces without creating public tombstones.
               </div>
-              <div className="sv-surface-soft rounded-[1.1rem] px-4 py-4">
+              <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                 Removed titles keep direct serial history and show an unavailable state.
               </div>
             </div>
           </div>
 
-          <div className="sv-surface rounded-[1.6rem] p-6">
+          <div className="rounded-xl border border-border/50 bg-card p-6">
             <p className="sv-overline">Moderation activity</p>
             <form className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
               <label className="block">
@@ -1218,7 +1288,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     : "admin";
 
                   return (
-                    <div key={entry.id} className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+                    <div key={entry.id} className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <p className="text-sm font-medium text-foreground">{entry.reason as string}</p>
@@ -1240,7 +1310,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   );
                 })
               ) : (
-                <div className="sv-surface-soft rounded-[1.2rem] px-4 py-5 text-sm text-muted-foreground">
+                <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-5 text-sm text-muted-foreground">
                   No moderation activity has been logged yet.
                 </div>
               )}

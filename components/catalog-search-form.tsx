@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -26,11 +25,12 @@ export function CatalogSearchForm({
   showSort = true,
 }: CatalogSearchFormProps) {
   const [selectedSort, setSelectedSort] = React.useState(sort);
+  const [searchFocused, setSearchFocused] = React.useState(false);
 
   return (
     <form
       className={[
-        "grid gap-3",
+        "grid gap-2.5",
         compact
           ? showSort
             ? "sm:grid-cols-[minmax(0,1fr)_11rem_8.5rem]"
@@ -42,11 +42,18 @@ export function CatalogSearchForm({
       <label className="grid gap-2">
         <span className="sv-overline">Search</span>
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="h-11 rounded-xl border-input/90 bg-background/70 pl-9 shadow-none dark:bg-input/20"
+          <Search
+            className={[
+              "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 transition-colors duration-150",
+              searchFocused ? "text-[var(--color-accent)]" : "text-muted-foreground",
+            ].join(" ")}
+          />
+          <input
+            className="sv-input h-11 pl-9"
             defaultValue={q}
             name="q"
+            onBlur={() => setSearchFocused(false)}
+            onFocus={() => setSearchFocused(true)}
             placeholder="Title, creator, or #serial"
             type="search"
           />
@@ -58,7 +65,9 @@ export function CatalogSearchForm({
           <span className="sv-overline">Sort</span>
           <input name="sort" type="hidden" value={selectedSort} />
           <Select onValueChange={setSelectedSort} value={selectedSort}>
-            <SelectTrigger className="h-11 w-full rounded-xl border-input/90 bg-background/70 shadow-none dark:bg-input/20">
+            <SelectTrigger
+              className="h-11 w-full rounded-[0.625rem] border-[var(--input)] bg-[var(--card)] shadow-[var(--shadow-card)] focus:border-[var(--color-accent)] focus:ring-[3px] focus:ring-[var(--color-accent-soft)]"
+            >
               <SelectValue placeholder="Sort" />
             </SelectTrigger>
             <SelectContent>

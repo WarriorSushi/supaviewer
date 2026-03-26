@@ -5,6 +5,7 @@ import { addFilmComment, toggleFilmLike, toggleFilmSave } from "@/app/actions/so
 import { FilmPlayer } from "@/components/film-player";
 import { FilmShareButton } from "@/components/film-share-button";
 import { FilmViewTracker } from "@/components/film-view-tracker";
+import { WatchEventReplayButton } from "@/components/watch-event-replay-button";
 import { BookmarkIcon, BotIcon, HeartIcon, ShareIcon } from "@/components/icons";
 import { RelatedFilmListItem } from "@/components/related-film-list-item";
 import { ShareButton } from "@/components/share-button";
@@ -20,7 +21,15 @@ import {
   getTrendingFilms,
 } from "@/lib/catalog";
 import { getFilmSocialState } from "@/lib/social";
-import { buildWatchEventHref, getUpcomingWatchEventForFilm, getWatchEventStatusLabel } from "@/lib/watch-events";
+import {
+  buildWatchEventHref,
+  getPrimaryWatchEventForFilm,
+  getWatchEventAudienceSummary,
+  getWatchEventConversationSummary,
+  getWatchEventPrimaryAction,
+  getWatchEventReplayLead,
+  getWatchEventStatusLabel,
+} from "@/lib/watch-events";
 import { buildYouTubeEmbedUrl } from "@/lib/youtube";
 
 const commentErrors: Record<string, string> = {
@@ -87,9 +96,9 @@ export default async function FilmDetailPage({ params, searchParams }: FilmDetai
     getTrendingFilms(8),
     getCurrentSessionProfile(),
   ]);
-  const [socialState, upcomingWatchEvent] = await Promise.all([
+  const [socialState, primaryWatchEvent] = await Promise.all([
     getFilmSocialState(film.id, creator?.id ?? film.creatorId),
-    getUpcomingWatchEventForFilm(film.id),
+    getPrimaryWatchEventForFilm(film.id),
   ]);
 
   const relatedFilms = trendingFilms.filter((entry) => entry.id !== film.id).slice(0, 6);
@@ -392,52 +401,67 @@ export default async function FilmDetailPage({ params, searchParams }: FilmDetai
         </div>
 
         <aside className="sv-surface rounded-[1.2rem] p-4">
-          {upcomingWatchEvent ? (
+          {primaryWatchEvent ? (
             <div className="rounded-[0.95rem] border border-border/80 bg-background/65 px-4 py-4">
-              <p className="sv-overline">Launch lounge</p>
+              <p className="sv-overline">
+                {primaryWatchEvent.phase === "ended" || primaryWatchEvent.phase === "cancelled" ? "Replay room" : "Launch lounge"}
+              </p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <span className="sv-chip">{getWatchEventStatusLabel(upcomingWatchEvent)}</span>
-                {upcomingWatchEvent.officialAgent ? (
+                <span className="sv-chip">{getWatchEventStatusLabel(primaryWatchEvent)}</span>
+                {primaryWatchEvent.officialAgent ? (
                   <span className="sv-chip">
                     <BotIcon className="h-3.5 w-3.5" />
-                    {upcomingWatchEvent.officialAgent.name}
+                    {primaryWatchEvent.officialAgent.name}
                   </span>
                 ) : null}
               </div>
-              <h2 className="mt-2 text-lg font-medium text-foreground">{upcomingWatchEvent.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {upcomingWatchEvent.phase === "live"
-                  ? "The room is live now with separate human and agent rails beside the player."
-                  : `Starts ${new Date(upcomingWatchEvent.startsAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}.`}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <span className="sv-chip">{upcomingWatchEvent.liveHumanCount} humans live</span>
-                <span className="sv-chip">{upcomingWatchEvent.liveAgentCount} agents live</span>
-              </div>
-              <div className="mt-4 grid gap-2 text-sm text-muted-foreground">
-                <div>
-                  Peak room load:{" "}
-                  <span className="text-foreground">
-                    {upcomingWatchEvent.analytics.peakHumanCount} humans / {upcomingWatchEvent.analytics.peakAgentCount} agents
-                  </span>
-                </div>
-                <div>
-                  Share performance:{" "}
-                  <span className="text-foreground">{upcomingWatchEvent.analytics.shareCount} room shares</span>
-                </div>
-              </div>
-              <div className="mt-4 grid gap-2">
-                <Link className="sv-btn sv-btn-primary w-full" href={buildWatchEventHref(upcomingWatchEvent)}>
-                  Open launch lounge
-                </Link>
-                <ShareButton
-                  analyticsTarget={{ surface: "film-watch-event-status", watchEventId: upcomingWatchEvent.id }}
-                  className="sv-btn sv-btn-secondary w-full"
-                  label="Share premiere room"
-                  path={buildWatchEventHref(upcomingWatchEvent)}
-                  title={upcomingWatchEvent.title}
-                />
-              </div>
+              {(() => {
+                const roomAction = getWatchEventPrimaryAction(primaryWatchEvent);
+                const audienceSummary = getWatchEventAudienceSummary(primaryWatchEvent);
+                const conversationSummary = getWatchEventConversationSummary(primaryWatchEvent);
+                const replayLead = getWatchEventReplayLead(primaryWatchEvent);
+
+                return (
+                  <>
+                    <h2 className="mt-2 text-lg font-medium text-foreground">{primaryWatchEvent.title}</h2>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{roomAction.description}</p>
+                    <div className="mt-3 rounded-[0.95rem] border border-[rgba(191,24,24,0.22)] bg-[rgba(191,24,24,0.07)] px-4 py-4">
+                      <p className="sv-overline">{roomAction.eyebrow}</p>
+                      <p className="mt-2 text-sm leading-6 text-foreground">{roomAction.title}</p>
+                    </div>
+                    <div className="mt-4 grid gap-2 text-sm text-muted-foreground">
+                      <div>
+                        Audience story: <span className="text-foreground">{audienceSummary}</span>
+                      </div>
+                      <div>
+                        Conversation split: <span className="text-foreground">{conversationSummary}</span>
+                      </div>
+                      <div>
+                        Replay lead: <span className="text-foreground">{replayLead}</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid gap-2">
+                      <Link className="sv-btn sv-btn-primary w-full" href={buildWatchEventHref(primaryWatchEvent)}>
+                        {roomAction.ctaLabel}
+                      </Link>
+                      <ShareButton
+                        analyticsTarget={{ surface: "film-watch-event-status", watchEventId: primaryWatchEvent.id }}
+                        className="sv-btn sv-btn-secondary w-full"
+                        label={primaryWatchEvent.phase === "ended" || primaryWatchEvent.phase === "cancelled" ? "Share replay room" : "Share premiere room"}
+                        path={buildWatchEventHref(primaryWatchEvent)}
+                        title={primaryWatchEvent.title}
+                      />
+                      {primaryWatchEvent.phase === "ended" || primaryWatchEvent.phase === "cancelled" ? (
+                        <WatchEventReplayButton
+                          enabled={Boolean(session.profile)}
+                          eventId={primaryWatchEvent.id}
+                          initialCount={primaryWatchEvent.analytics.replayInterestCount}
+                        />
+                      ) : null}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           ) : null}
 

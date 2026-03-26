@@ -5,34 +5,14 @@ import {
   logAgentRun,
 } from "@/lib/agents";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { refreshWatchEventPeakCounts } from "@/lib/watch-events";
+import {
+  finalizeWatchEventActivity,
+  getWatchEventInteractionError,
+  resolveWatchEventRecord,
+  upsertAgentWatchEventAttendee,
+} from "@/lib/watch-events";
 
 export const dynamic = "force-dynamic";
-
-async function resolveWatchEvent(body: Record<string, unknown>) {
-  const eventId = String(body.event_id ?? "").trim();
-  const eventSlug = String(body.event_slug ?? "").trim();
-  const supabase = createSupabaseAdminClient();
-
-  if (!eventId && !eventSlug) {
-    return null;
-  }
-
-  const query = supabase
-    .from("watch_events")
-    .select("id, official_agent_id")
-    .limit(1);
-
-  const { data, error } = eventId
-    ? await query.eq("id", eventId).maybeSingle()
-    : await query.eq("slug", eventSlug).maybeSingle();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data as { id: string; official_agent_id: string | null } | null;
-}
 
 export async function POST(request: Request) {
   const agentSession = await authenticateAgentRequest("comment");
@@ -45,8 +25,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "This agent is still sandboxed for public lounge messages." }, { status: 403 });
   }
 
+  let body: Record<string, unknown>;
+
   try {
-    const body = (await request.json()) as Record<string, unknown>;
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    await logAgentRun(agentSession.agent.id, "watch-event-message", "failed", {
+      reason: "invalid-json",
+    });
+
+    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  }
+
+  try {
     const messageBody = String(body.body ?? "").trim();
 
     if (!messageBody) {
@@ -57,7 +48,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Message body is required." }, { status: 400 });
     }
 
-    const event = await resolveWatchEvent(body);
+    const event = await resolveWatchEventRecord({
+      eventId: String(body.event_id ?? "").trim(),
+      eventSlug: String(body.event_slug ?? "").trim(),
+    });
 
     if (!event) {
       await logAgentRun(agentSession.agent.id, "watch-event-message", "rejected", {
@@ -65,6 +59,19 @@ export async function POST(request: Request) {
       });
 
       return NextResponse.json({ error: "Watch event not found." }, { status: 404 });
+    }
+
+    const interactionError = getWatchEventInteractionError(event, {
+      actorType: "agent",
+      kind: "message",
+    });
+
+    if (interactionError) {
+      await logAgentRun(agentSession.agent.id, "watch-event-message", "rejected", {
+        reason: `lifecycle-${event.phase}`,
+      });
+
+      return NextResponse.json({ error: interactionError.error }, { status: interactionError.statusCode });
     }
 
     const actionPolicy = await checkAgentPublicActionPolicy(agentSession.agent, "comment");
@@ -78,24 +85,15 @@ export async function POST(request: Request) {
     }
 
     const supabase = createSupabaseAdminClient();
-    const now = new Date().toISOString();
-    await supabase.from("watch_event_attendees").upsert(
-      {
-        event_id: event.id,
-        agent_id: agentSession.agent.id,
-        agent_slug: agentSession.agent.slug,
-        attendee_type: "agent",
-        display_name: agentSession.agent.name,
-        presence_state: "answering-questions",
-        trust_level: agentSession.agent.trustLevel,
-        is_official_creator_agent: agentSession.agent.isOfficialCreatorAgent,
-        is_host: event.official_agent_id === agentSession.agent.id,
-        last_seen_at: now,
-      },
-      {
-        onConflict: "event_id,agent_id",
-      },
-    );
+    await upsertAgentWatchEventAttendee({
+      event,
+      agentId: agentSession.agent.id,
+      agentSlug: agentSession.agent.slug,
+      displayName: agentSession.agent.name,
+      presenceState: "answering-questions",
+      trustLevel: agentSession.agent.trustLevel,
+      isOfficialCreatorAgent: agentSession.agent.isOfficialCreatorAgent,
+    });
 
     const { data, error } = await supabase
       .from("watch_event_messages")
@@ -120,7 +118,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Agent lounge message could not be created." }, { status: 500 });
     }
 
-    await refreshWatchEventPeakCounts(event.id);
+    await finalizeWatchEventActivity(event.id);
     await logAgentRun(agentSession.agent.id, "watch-event-message", "created", {
       watchEventId: event.id,
       watchEventMessageId: data.id,
@@ -129,9 +127,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, watch_event_id: event.id, message_id: data.id }, { status: 201 });
   } catch {
     await logAgentRun(agentSession.agent.id, "watch-event-message", "failed", {
-      reason: "invalid-json",
+      reason: "server-error",
     });
 
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    return NextResponse.json({ error: "Agent lounge message could not be created." }, { status: 500 });
   }
 }

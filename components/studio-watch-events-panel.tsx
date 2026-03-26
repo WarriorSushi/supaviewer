@@ -9,6 +9,10 @@ import {
 import { ShareButton } from "@/components/share-button";
 import {
   buildWatchEventHref,
+  getWatchEventAudienceSummary,
+  getWatchEventConversationSummary,
+  getWatchEventPrimaryAction,
+  getWatchEventReplayLead,
   getWatchEventStatusLabel,
   type StudioWatchFilmOption,
   type WatchEventAgent,
@@ -40,9 +44,22 @@ export function StudioWatchEventsPanel({
   officialAgents,
   canSchedule,
 }: StudioWatchEventsPanelProps) {
+  const roomMetrics = events.reduce(
+    (acc, event) => {
+      acc.live += event.phase === "live" ? 1 : 0;
+      acc.scheduled += event.phase === "scheduled" ? 1 : 0;
+      acc.archives += event.phase === "ended" || event.phase === "cancelled" ? 1 : 0;
+      acc.totalReplayInterest += event.analytics.replayInterestCount;
+      acc.totalShares += event.analytics.shareCount;
+      acc.withCompanion += event.officialAgent ? 1 : 0;
+      return acc;
+    },
+    { live: 0, scheduled: 0, archives: 0, totalReplayInterest: 0, totalShares: 0, withCompanion: 0 },
+  );
+
   return (
     <div className="grid gap-6">
-      <div className="sv-surface rounded-[1.8rem] p-6">
+      <div className="rounded-xl border border-border/50 bg-card p-6">
         <p className="sv-overline">Watch lounge</p>
         <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_24rem]">
           {canSchedule ? (
@@ -117,13 +134,13 @@ export function StudioWatchEventsPanel({
               </button>
             </form>
           ) : (
-            <div className="sv-surface-soft rounded-[1.3rem] px-5 py-5 text-sm leading-6 text-muted-foreground">
+            <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5 text-sm leading-6 text-muted-foreground">
               Create or claim your creator profile and get at least one accepted film into the catalog before scheduling a public launch lounge.
             </div>
           )}
 
           <div className="grid gap-4">
-            <div className="sv-surface-soft rounded-[1.3rem] px-4 py-4">
+            <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
               <p className="sv-overline">Room shape</p>
               <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
                 <div>One canonical watch URL per event.</div>
@@ -131,66 +148,137 @@ export function StudioWatchEventsPanel({
                 <div>Official companion agents can host without muddying human chat.</div>
               </div>
             </div>
-            <div className="sv-surface-soft rounded-[1.3rem] px-4 py-4">
+            <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
+              <p className="sv-overline">Current pulse</p>
+              <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
+                <div>{roomMetrics.live} live room{roomMetrics.live === 1 ? "" : "s"} right now.</div>
+                <div>{roomMetrics.scheduled} scheduled room{roomMetrics.scheduled === 1 ? "" : "s"} ready to share.</div>
+                <div>{roomMetrics.archives} replay archive{roomMetrics.archives === 1 ? "" : "s"} preserving the room story.</div>
+                <div>{roomMetrics.withCompanion} room{roomMetrics.withCompanion === 1 ? "" : "s"} assigned an official companion agent.</div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
               <p className="sv-overline">Why this matters</p>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Launch parties turn Supaviewer from a catalog entry into the place the premiere actually happens.
+              <p className="sv-body mt-3">
+                Launch parties turn Supaviewer from a catalog entry into the place the premiere actually happens, then keep that story intact as a replay object.
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="sv-surface rounded-[1.8rem] p-6">
+      <div className="rounded-xl border border-border/50 bg-card p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="sv-overline">Scheduled rooms</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-foreground">Your launch lounges</h2>
+            <h2 className="mt-2 font-display text-2xl font-medium text-foreground">Your launch lounges</h2>
           </div>
-          <span className="sv-chip">{events.length} rooms</span>
+          <div className="flex flex-wrap gap-2">
+            <span className="sv-chip">{events.length} rooms</span>
+            <span className="sv-chip">{roomMetrics.totalReplayInterest} replay requests</span>
+            <span className="sv-chip">{roomMetrics.totalShares} tracked shares</span>
+          </div>
         </div>
 
         <div className="mt-5 grid gap-4">
           {events.length ? (
             events.map((event) => (
-              <div key={event.id} className="sv-surface-soft rounded-[1.4rem] px-5 py-5" data-testid={`watch-event-card-${event.id}`}>
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap gap-2">
-                      <span className="sv-chip">{getWatchEventStatusLabel(event)}</span>
-                      {event.officialAgent ? <span className="sv-chip">{event.officialAgent.name}</span> : null}
-                    </div>
-                    <h3 className="mt-3 text-xl font-semibold tracking-[-0.03em] text-foreground">{event.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{event.description}</p>
-                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                      <span>#{event.film.serial}</span>
-                      <span>/</span>
-                      <span>{event.film.title}</span>
-                      <span>/</span>
-                      <span>{new Date(event.startsAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</span>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2 text-sm text-muted-foreground">
-                      <span className="sv-chip">{event.liveHumanCount} humans active</span>
-                      <span className="sv-chip">{event.liveAgentCount} agents active</span>
-                    </div>
-                    <div className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-5">
-                      <div className="sv-surface-soft rounded-[1rem] px-4 py-3">
-                        Peak humans: <span className="text-foreground">{event.analytics.peakHumanCount}</span>
-                      </div>
-                      <div className="sv-surface-soft rounded-[1rem] px-4 py-3">
-                        Peak agents: <span className="text-foreground">{event.analytics.peakAgentCount}</span>
-                      </div>
-                      <div className="sv-surface-soft rounded-[1rem] px-4 py-3">
-                        Messages: <span className="text-foreground">{event.analytics.totalMessages}</span>
-                      </div>
-                      <div className="sv-surface-soft rounded-[1rem] px-4 py-3">
-                        Replay interest: <span className="text-foreground">{event.analytics.replayInterestCount}</span>
-                      </div>
-                      <div className="sv-surface-soft rounded-[1rem] px-4 py-3">
-                        Shares: <span className="text-foreground">{event.analytics.shareCount}</span>
-                      </div>
-                    </div>
-                    <form action={updateWatchEvent} className="mt-4 grid gap-4 rounded-[1.2rem] border border-border/80 bg-background/45 p-4">
+              <div key={event.id} className="rounded-xl border border-border/50 bg-card/60 px-5 py-5" data-testid={`watch-event-card-${event.id}`}>
+                {(() => {
+                  const roomAction = getWatchEventPrimaryAction(event);
+                  const audienceSummary = getWatchEventAudienceSummary(event);
+                  const conversationSummary = getWatchEventConversationSummary(event);
+                  const replayLead = getWatchEventReplayLead(event);
+
+                  return (
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap gap-2">
+                          <span className="sv-chip">{getWatchEventStatusLabel(event)}</span>
+                          {event.officialAgent ? <span className="sv-chip">{event.officialAgent.name}</span> : null}
+                        </div>
+                        <h3 className="mt-3 font-display text-xl font-medium text-foreground">{event.title}</h3>
+                        <p className="sv-body mt-2">{event.description}</p>
+                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                          <span>#{event.film.serial}</span>
+                          <span>/</span>
+                          <span>{event.film.title}</span>
+                          <span>/</span>
+                          <span>{new Date(event.startsAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</span>
+                        </div>
+                        <div className="mt-4 rounded-xl border border-[oklch(0.72_0.14_55_/_20%)] bg-[oklch(0.72_0.14_55_/_6%)] px-4 py-4">
+                          <p className="sv-overline">{roomAction.eyebrow}</p>
+                          <p className="mt-2 text-lg font-medium tracking-[-0.03em] text-foreground">{roomAction.title}</p>
+                          <p className="sv-body mt-2">{roomAction.description}</p>
+                        </div>
+                        <div className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-4">
+                          <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
+                            Audience story: <span className="text-foreground">{audienceSummary}</span>
+                          </div>
+                          <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
+                            Conversation split: <span className="text-foreground">{conversationSummary}</span>
+                          </div>
+                          <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
+                            Replay markers: <span className="text-foreground">{event.replayHighlightCount}</span>
+                          </div>
+                          <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
+                            Moderator actions: <span className="text-foreground">{event.moderationActionCount}</span>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-4">
+                          <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
+                            Peak humans: <span className="text-foreground">{event.analytics.peakHumanCount}</span>
+                          </div>
+                          <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
+                            Peak agents: <span className="text-foreground">{event.analytics.peakAgentCount}</span>
+                          </div>
+                          <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
+                            Replay interest: <span className="text-foreground">{event.analytics.replayInterestCount}</span>
+                          </div>
+                          <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
+                            Shares: <span className="text-foreground">{event.analytics.shareCount}</span>
+                          </div>
+                        </div>
+                        <div className="mt-3 rounded-xl border border-border/50 bg-card/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
+                          <p className="sv-overline">Replay lead</p>
+                          <p className="mt-2 text-foreground">{replayLead}</p>
+                        </div>
+                        <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
+                          <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
+                            <p className="sv-overline">Room health</p>
+                            <p className="mt-2 text-foreground">
+                              {event.latestSnapshot
+                                ? `${event.latestSnapshot.humanCount} humans / ${event.latestSnapshot.agentCount} agents in the latest pulse.`
+                                : "Waiting for the first live pulse."}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
+                            <p className="sv-overline">Companion status</p>
+                            <p className="mt-2 text-foreground">
+                              {event.officialAgent
+                                ? `${event.officialAgent.name} is assigned as the companion rail.`
+                                : "No official companion assigned yet."}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
+                            <p className="sv-overline">Visible stewardship</p>
+                            <p className="mt-2 text-foreground">
+                              {event.latestModerationEntry
+                                ? `${event.latestModerationEntry.actorDisplayName} last intervened with ${event.latestModerationEntry.action}.`
+                                : "No moderator intervention logged yet."}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-3 rounded-xl border border-border/50 bg-card/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
+                          <p className="sv-overline">Creator status surface</p>
+                          <p className="mt-2 text-foreground">
+                            Latest room activity landed {new Date(event.latestActivityAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}.
+                          </p>
+                          <p className="mt-2">
+                            Replay demand is at <span className="text-foreground">{event.analytics.replayInterestCount}</span>, tracked room shares are <span className="text-foreground">{event.analytics.shareCount}</span>, and the room has produced <span className="text-foreground">{event.replayHighlightCount}</span> replay-ready moment{event.replayHighlightCount === 1 ? "" : "s"}.
+                          </p>
+                        </div>
+                        <form action={updateWatchEvent} className="mt-4 grid gap-4 rounded-xl border border-border/50 bg-card/60 p-4">
                       <input name="eventId" type="hidden" value={event.id} />
                       <label className="block">
                         <span className="sv-field-label">Room title</span>
@@ -206,6 +294,7 @@ export function StudioWatchEventsPanel({
                           <input
                             className="sv-input"
                             defaultValue={formatLocalDateTimeInputValue(event.startsAt)}
+                            disabled={event.phase === "live" || event.phase === "ended"}
                             name="startsAt"
                             type="datetime-local"
                           />
@@ -232,6 +321,13 @@ export function StudioWatchEventsPanel({
                           </select>
                         </label>
                       </div>
+                      {event.phase === "live" || event.phase === "ended" ? (
+                        <p className="sv-body-sm">
+                          {event.phase === "live"
+                            ? "This room is already live, so the scheduled start stays fixed while you adjust metadata or duration."
+                            : "Ended rooms keep their original timing; use this form for metadata and companion cleanup only."}
+                        </p>
+                      ) : null}
                       <div className="flex flex-wrap gap-2">
                         <button className="sv-btn sv-btn-primary" type="submit">Save edits</button>
                         <button
@@ -259,28 +355,30 @@ export function StudioWatchEventsPanel({
                           Cancel
                         </button>
                       </div>
-                    </form>
-                  </div>
-                  <div className="flex min-w-[15rem] flex-col gap-2">
-                    <Link className="sv-btn sv-btn-primary w-full" href={buildWatchEventHref(event)}>
-                      Open lounge
-                    </Link>
-                    <Link className="sv-btn sv-btn-secondary w-full" href={`/films/${event.film.serial}-${event.film.slug}`}>
-                      Open film page
-                    </Link>
-                    <ShareButton
-                      analyticsTarget={{ surface: "studio-watch-event", watchEventId: event.id }}
-                      className="sv-btn sv-btn-secondary w-full"
-                      label={getWatchEventStatusLabel(event)}
-                      path={buildWatchEventHref(event)}
-                      title={event.title}
-                    />
-                  </div>
-                </div>
+                        </form>
+                      </div>
+                      <div className="flex min-w-[15rem] flex-col gap-2">
+                        <Link className="sv-btn sv-btn-primary w-full" href={buildWatchEventHref(event)}>
+                          {roomAction.ctaLabel}
+                        </Link>
+                        <Link className="sv-btn sv-btn-secondary w-full" href={`/films/${event.film.serial}-${event.film.slug}`}>
+                          Open film page
+                        </Link>
+                        <ShareButton
+                          analyticsTarget={{ surface: "studio-watch-event", watchEventId: event.id }}
+                          className="sv-btn sv-btn-secondary w-full"
+                          label={getWatchEventStatusLabel(event)}
+                          path={buildWatchEventHref(event)}
+                          title={event.title}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ))
           ) : (
-            <div className="sv-surface-soft rounded-[1.2rem] px-4 py-5 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-5 text-sm text-muted-foreground">
               No launch lounges yet. Schedule the first one above and give your film a canonical premiere room.
             </div>
           )}

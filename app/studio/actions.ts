@@ -12,8 +12,11 @@ import { logModerationCase } from "@/lib/moderation";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
+  buildScheduledWatchEventLifecycle,
+  buildUpdatedWatchEventLifecycle,
   buildWatchEventHref,
   createUniqueWatchEventSlug,
+  getWatchEventHostMutationError,
   getOwnedWatchEventForHost,
 } from "@/lib/watch-events";
 
@@ -52,12 +55,12 @@ function parseFutureDate(value: string) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-async function revalidateOwnedWatchEventPaths(event: { slug: string; film_id: string }) {
+async function revalidateOwnedWatchEventPaths(event: { slug: string; filmId: string }) {
   const supabase = createSupabaseAdminClient();
   const { data: film } = await supabase
     .from("films")
     .select("serial_number, slug")
-    .eq("id", event.film_id)
+    .eq("id", event.filmId)
     .maybeSingle();
 
   revalidatePath("/studio");
@@ -626,7 +629,6 @@ export async function scheduleWatchEvent(formData: FormData) {
   const slug = await createUniqueWatchEventSlug(`${film.slug} ${title}`);
   const startsAtIso = startsAt.toISOString();
   const endsAtIso = new Date(startsAt.getTime() + durationMinutes * 60 * 1000).toISOString();
-  const status = startsAt.getTime() <= Date.now() ? "live" : "scheduled";
   const { data: event, error } = await serverSupabase
     .from("watch_events")
     .insert({
@@ -637,9 +639,7 @@ export async function scheduleWatchEvent(formData: FormData) {
       creator_id: creator.id,
       host_profile_id: profile.id,
       official_agent_id: validatedAgentId,
-      starts_at: startsAtIso,
-      ends_at: endsAtIso,
-      status,
+      ...buildScheduledWatchEventLifecycle(startsAtIso, endsAtIso),
     })
     .select("slug")
     .maybeSingle();
@@ -702,17 +702,19 @@ export async function updateWatchEvent(formData: FormData) {
 
   const startsAtIso = startsAt.toISOString();
   const endsAtIso = new Date(startsAt.getTime() + durationMinutes * 60 * 1000).toISOString();
-  const nextStatus = event.status === "cancelled" ? "scheduled" : event.status;
+  const transitionError = getWatchEventHostMutationError(event, "update-schedule");
+
+  if (transitionError) {
+    redirect("/studio?error=watch-event-update-failed");
+  }
+
   const { error } = await supabase
     .from("watch_events")
     .update({
       title,
       description,
       official_agent_id: validatedAgentId,
-      starts_at: startsAtIso,
-      ends_at: endsAtIso,
-      status: nextStatus,
-      cancelled_at: null,
+      ...buildUpdatedWatchEventLifecycle(event, startsAtIso, endsAtIso),
     })
     .eq("id", event.id);
 
@@ -734,6 +736,10 @@ export async function startWatchEventNow(eventId: string) {
   const event = await getOwnedWatchEventForHost(eventId, profile.id);
 
   if (!event) {
+    redirect("/studio?error=watch-event-update-failed");
+  }
+
+  if (getWatchEventHostMutationError(event, "start-now")) {
     redirect("/studio?error=watch-event-update-failed");
   }
 
@@ -770,6 +776,10 @@ export async function endWatchEventNow(eventId: string) {
     redirect("/studio?error=watch-event-update-failed");
   }
 
+  if (getWatchEventHostMutationError(event, "end-now")) {
+    redirect("/studio?error=watch-event-update-failed");
+  }
+
   const nowIso = new Date().toISOString();
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase
@@ -802,6 +812,10 @@ export async function cancelWatchEvent(eventId: string) {
     redirect("/studio?error=watch-event-update-failed");
   }
 
+  if (getWatchEventHostMutationError(event, "cancel")) {
+    redirect("/studio?error=watch-event-update-failed");
+  }
+
   const nowIso = new Date().toISOString();
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase
@@ -809,6 +823,8 @@ export async function cancelWatchEvent(eventId: string) {
     .update({
       status: "cancelled",
       cancelled_at: nowIso,
+      actual_ended_at: event.phase === "live" ? nowIso : event.actualEndedAt,
+      ends_at: event.phase === "live" ? nowIso : event.endsAt,
     })
     .eq("id", event.id);
 

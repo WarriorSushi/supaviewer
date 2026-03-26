@@ -104,15 +104,15 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
   const claimInReview = library.claims.filter((claim) => claim.status === "pending").length;
 
   return (
-    <main className="mx-auto w-full max-w-[100rem] px-4 pb-28 pt-8 sm:px-6 lg:px-10">
-      <section className="sv-page-hero rounded-[1rem] p-6 sm:p-8">
+    <main className="mx-auto w-full max-w-[96rem] px-4 pb-28 pt-8 sm:px-6 lg:px-10">
+      <section className="rounded-xl border border-border/50 bg-card p-6 sm:p-8 sv-animate-in">
         <p className="sv-overline">Creator studio</p>
         <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-4xl font-semibold tracking-[-0.05em] text-foreground sm:text-5xl">
+            <h1 className="font-display text-4xl font-medium text-foreground sm:text-5xl">
               Manage your identity and editorial surface.
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+            <p className="sv-body mt-4 max-w-2xl">
               Keep your viewer profile, creator page, submission history, and watch shelf aligned in
               one place.
             </p>
@@ -125,43 +125,43 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
           </Link>
         </div>
         {successMessage ? (
-          <div className="mt-6 rounded-[1.25rem] border border-emerald-400/20 bg-emerald-400/10 px-4 py-4 text-sm text-emerald-100">
+          <div className="mt-6 rounded-xl border border-[oklch(0.72_0.14_55_/_20%)] bg-[oklch(0.72_0.14_55_/_6%)] px-4 py-4 text-sm text-foreground">
             {successMessage}
           </div>
         ) : null}
         {error ? (
-          <div className="mt-4 rounded-[1.25rem] border border-rose-400/20 bg-rose-400/10 px-4 py-4 text-sm text-rose-100">
+          <div className="mt-4 rounded-xl border border-[oklch(0.72_0.14_55_/_30%)] bg-[oklch(0.72_0.14_55_/_8%)] px-4 py-4 text-sm text-foreground">
             {error}
           </div>
         ) : null}
       </section>
 
       <section className="grid gap-4 pt-6 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="sv-surface rounded-[1.2rem] px-5 py-5">
+        <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5 sv-animate-in sv-stagger-1">
           <p className="sv-overline">Pending review</p>
-          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{pendingSubmissions}</p>
-          <p className="mt-2 text-sm text-muted-foreground">Submissions waiting on moderation.</p>
+          <p className="mt-3 font-display text-3xl font-medium text-foreground">{pendingSubmissions}</p>
+          <p className="sv-body-sm mt-2">Submissions waiting on moderation.</p>
         </div>
-        <div className="sv-surface rounded-[1.2rem] px-5 py-5">
+        <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5 sv-animate-in sv-stagger-2">
           <p className="sv-overline">Accepted</p>
-          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{acceptedSubmissions}</p>
-          <p className="mt-2 text-sm text-muted-foreground">Titles already pushed into the catalog.</p>
+          <p className="mt-3 font-display text-3xl font-medium text-foreground">{acceptedSubmissions}</p>
+          <p className="sv-body-sm mt-2">Titles already pushed into the catalog.</p>
         </div>
-        <div className="sv-surface rounded-[1.2rem] px-5 py-5">
+        <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5 sv-animate-in sv-stagger-3">
           <p className="sv-overline">Saved shelf</p>
-          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{library.saved.length}</p>
-          <p className="mt-2 text-sm text-muted-foreground">Films you want to revisit or reference.</p>
+          <p className="mt-3 font-display text-3xl font-medium text-foreground">{library.saved.length}</p>
+          <p className="sv-body-sm mt-2">Films you want to revisit or reference.</p>
         </div>
-        <div className="sv-surface rounded-[1.2rem] px-5 py-5">
+        <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5 sv-animate-in sv-stagger-4">
           <p className="sv-overline">Claims in review</p>
-          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{claimInReview}</p>
-          <p className="mt-2 text-sm text-muted-foreground">Creator identity requests awaiting admin review.</p>
+          <p className="mt-3 font-display text-3xl font-medium text-foreground">{claimInReview}</p>
+          <p className="sv-body-sm mt-2">Creator identity requests awaiting admin review.</p>
         </div>
       </section>
 
       <section className="grid gap-6 py-8 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="grid gap-6">
-          <div className="sv-surface rounded-[1.8rem] p-6">
+          <div className="rounded-xl border border-border/50 bg-card p-6 sv-animate-in sv-stagger-2">
             <p className="sv-overline">Viewer profile</p>
             <form action={updateViewerProfile} className="mt-5 grid gap-4">
               <label className="block">
@@ -189,22 +189,22 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
             </form>
           </div>
 
-          <div className="sv-surface rounded-[1.8rem] p-6">
+          <div className="rounded-xl border border-border/50 bg-card p-6 sv-animate-in sv-stagger-3">
             <p className="sv-overline">Submission health</p>
             <div className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
-              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+              <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                 {library.submissions.length} submissions
               </div>
-              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+              <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                 {library.saved.length} saved films
               </div>
-              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+              <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                 {library.claims.length} claim requests
               </div>
             </div>
           </div>
 
-          <div className="sv-surface rounded-[1.8rem] p-6">
+          <div className="rounded-xl border border-border/50 bg-card p-6 sv-animate-in sv-stagger-4">
             <p className="sv-overline">Submission queue</p>
             <div className="mt-4 grid gap-3">
               {library.submissions.length ? (
@@ -212,7 +212,7 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
                   const rejectionLabel = getSubmissionRejectionReasonLabel(submission.rejectionReason);
 
                   return (
-                    <div key={submission.id} className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+                    <div key={submission.id} className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <p className="text-lg font-medium tracking-[-0.02em] text-foreground">{submission.title}</p>
@@ -231,11 +231,11 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
                         </form>
                       ) : null}
                       {rejectionLabel ? (
-                        <div className="mt-4 rounded-[1rem] border border-border/80 bg-background/65 px-4 py-4 text-sm text-muted-foreground">
+                        <div className="mt-4 rounded-xl border border-border/50 bg-card/60 px-4 py-4 text-sm text-muted-foreground">
                           <p className="sv-overline">Moderator feedback</p>
                           <p className="mt-2 text-foreground">{rejectionLabel}</p>
                           {submission.rejectionDetails ? (
-                            <p className="mt-2 leading-6 text-muted-foreground">{submission.rejectionDetails}</p>
+                            <p className="sv-body mt-2">{submission.rejectionDetails}</p>
                           ) : null}
                         </div>
                       ) : null}
@@ -243,37 +243,37 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
                   );
                 })
               ) : (
-                <div className="sv-surface-soft rounded-[1.2rem] px-4 py-5 text-sm text-muted-foreground">
+                <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-5 text-sm text-muted-foreground">
                   No submissions yet.
                 </div>
               )}
             </div>
           </div>
 
-          <div className="sv-surface rounded-[1.8rem] p-6">
+          <div className="rounded-xl border border-border/50 bg-card p-6 sv-animate-in sv-stagger-5">
             <p className="sv-overline">Next moves</p>
-            <div className="mt-4 grid gap-3 text-sm text-muted-foreground">
-              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+            <div className="mt-4 grid gap-3 sv-body-sm">
+              <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                 Keep your public creator bio sharp. It shapes trust when someone lands from a shared film link.
               </div>
-              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+              <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                 Submit only embeddable, rights-safe YouTube sources so moderation stays fast and approvals stay clean.
               </div>
-              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+              <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                 Early accepted titles lock permanent serial numbers. That is the public collectible layer.
               </div>
-              <div className="sv-surface-soft rounded-[1.2rem] px-4 py-4">
+              <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
                 Your Supaviewer URL should be the status object you share in decks, ads, and launch posts.
               </div>
             </div>
           </div>
         </div>
 
-        <div className="sv-surface rounded-[1.8rem] p-6">
+        <div className="rounded-xl border border-border/50 bg-card p-6 sv-animate-in sv-stagger-3">
           <p className="sv-overline">Creator profile</p>
           {ownedCreator ? (
             <div className="mt-4 grid gap-6">
-              <div className="sv-page-hero--compact rounded-[1.8rem] p-6">
+              <div className="rounded-xl border border-border/50 bg-card/60 p-6">
                 <p className="sv-overline">Active public profile</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <StatusPill badge={ownedCreator.founderBadge} />
@@ -281,8 +281,8 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
                     <StatusPill key={`${ownedCreator.slug}-${trophy.slug}`} trophy={trophy} />
                   ))}
                 </div>
-                <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{ownedCreator.name}</h2>
-                <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">{ownedCreator.bio}</p>
+                <h2 className="mt-3 font-display text-3xl font-medium text-foreground">{ownedCreator.name}</h2>
+                <p className="sv-body mt-3 max-w-2xl">{ownedCreator.bio}</p>
                 <div className="mt-5 flex flex-wrap gap-3">
                   <Link
                     className="sv-btn sv-btn-primary"
@@ -304,16 +304,16 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5">
                   <p className="sv-overline">Bragging rights</p>
-                  <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-foreground">
+                  <p className="mt-3 font-display text-2xl font-medium text-foreground">
                     {ownedCreator.earliestSerial ? `#${ownedCreator.earliestSerial}` : "Pending"}
                   </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="sv-body-sm mt-2">
                     Earliest accepted serial on your creator page.
                   </p>
                 </div>
-                <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5">
                   <p className="sv-overline">Trophies</p>
                   <div className="mt-3">
                     <TrophyStrip emptyLabel="No trophies yet. Earn or get featured to create the first one." trophies={ownedCreator.trophies} />
@@ -323,31 +323,31 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
 
               {creatorAnalytics ? (
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                  <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5">
                     <p className="sv-overline">Saves</p>
-                    <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-foreground">{creatorAnalytics.totalSaves}</p>
-                    <p className="mt-2 text-sm text-muted-foreground">Signals across your public filmography.</p>
+                    <p className="mt-3 font-display text-2xl font-medium text-foreground">{creatorAnalytics.totalSaves}</p>
+                    <p className="sv-body-sm mt-2">Signals across your public filmography.</p>
                   </div>
-                  <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                  <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5">
                     <p className="sv-overline">Discussion</p>
-                    <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-foreground">{creatorAnalytics.totalDiscussion}</p>
-                    <p className="mt-2 text-sm text-muted-foreground">Public comments attached to your accepted titles.</p>
+                    <p className="mt-3 font-display text-2xl font-medium text-foreground">{creatorAnalytics.totalDiscussion}</p>
+                    <p className="sv-body-sm mt-2">Public comments attached to your accepted titles.</p>
                   </div>
-                  <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                  <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5">
                     <p className="sv-overline">Shares tracked</p>
-                    <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-foreground">{creatorAnalytics.totalShares}</p>
-                    <p className="mt-2 text-sm text-muted-foreground">Creator-page and film-page share actions captured in product.</p>
+                    <p className="mt-3 font-display text-2xl font-medium text-foreground">{creatorAnalytics.totalShares}</p>
+                    <p className="sv-body-sm mt-2">Creator-page and film-page share actions captured in product.</p>
                   </div>
-                  <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                  <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5">
                     <p className="sv-overline">Collection placements</p>
-                    <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-foreground">{creatorAnalytics.collectionPlacements}</p>
-                    <p className="mt-2 text-sm text-muted-foreground">Editorial placements helping discovery beyond source hosting.</p>
+                    <p className="mt-3 font-display text-2xl font-medium text-foreground">{creatorAnalytics.collectionPlacements}</p>
+                    <p className="sv-body-sm mt-2">Editorial placements helping discovery beyond source hosting.</p>
                   </div>
                 </div>
               ) : null}
 
               {creatorAnalytics ? (
-                <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+                <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5">
                   <p className="sv-overline">Creator analytics</p>
                   <div className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
                     <div>
@@ -371,9 +371,9 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
                 </div>
               ) : null}
 
-              <div className="sv-surface-soft rounded-[1.4rem] px-5 py-5">
+              <div className="rounded-xl border border-border/50 bg-card/60 px-5 py-5">
                 <p className="sv-overline">Why Supaviewer matters</p>
-                <div className="mt-4 grid gap-3 text-sm text-muted-foreground">
+                <div className="mt-4 grid gap-3 sv-body-sm">
                   <div>Permanent serials make your release legible as part of the early AI-film canon.</div>
                   <div>Founder badges and trophies make your creator page inherently more shareable than the source upload page.</div>
                   <div>Canonical Supaviewer URLs preserve art context, discovery context, and status in one place.</div>
@@ -423,7 +423,7 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
             </div>
           ) : (
             <div className="mt-4 grid gap-5">
-              <p className="text-sm leading-6 text-muted-foreground">
+              <p className="sv-body">
                 Create your public creator page to own your filmography and claim submissions under a
                 single identity.
               </p>
@@ -488,7 +488,7 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
       </section>
 
       <section className="pb-8">
-        <StudioAgentPanel agents={ownedAgents} />
+        <StudioAgentPanel agents={ownedAgents} watchEvents={watchEventStudioData.events} />
       </section>
     </main>
   );
