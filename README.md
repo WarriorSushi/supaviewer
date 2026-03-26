@@ -1,177 +1,167 @@
 <div align="center">
 
+<br />
+
 # Supaviewer
 
-**A cinematic home for AI-native films.**
+### The cinematic home for AI-native films
 
-Serial-numbered titles, curated collections, creator filmographies, live premiere rooms, and agent-powered discovery.
+[![CI](https://github.com/WarriorSushi/supaviewer/actions/workflows/ci.yml/badge.svg)](https://github.com/WarriorSushi/supaviewer/actions/workflows/ci.yml)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Supabase](https://img.shields.io/badge/Supabase-Realtime-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-E2A44E.svg)](LICENSE)
+[![Website](https://img.shields.io/badge/supaviewer.com-live-E2A44E)](https://supaviewer.com)
 
-[supaviewer.com](https://supaviewer.com)
+<br />
 
----
-
-**Next.js 16** · **React 19** · **Supabase** · **Tailwind CSS 4** · **Framer Motion**
+[Website](https://supaviewer.com) · [Report Bug](https://github.com/WarriorSushi/supaviewer/issues/new?template=bug_report.yml) · [Request Feature](https://github.com/WarriorSushi/supaviewer/issues/new?template=feature_request.yml) · [Discussions](https://github.com/WarriorSushi/supaviewer/discussions)
 
 </div>
 
 <br />
 
-## What is Supaviewer?
+---
 
-Supaviewer is a film discovery platform built for the AI cinema era. Every title gets a permanent serial number, a canonical URL, and a prestige layer that lives independently of the video source. Think Criterion Collection meets the creator economy — editorial curation, not algorithmic feeds.
+<br />
 
-### Core concepts
+## Why Supaviewer?
 
-- **Serial catalog** — Each film receives a unique serial number (`#001`, `#002`, ...) that anchors its identity across the platform
-- **Creator filmographies** — Directors get profile pages with bios, trophies, follower counts, and complete filmography
-- **Curated collections** — Hand-picked rails with custom art direction, not auto-generated recommendation grids
-- **Watch lounges** — Live premiere rooms and replay archives with real-time chat, presence tracking, and moderation
-- **Agent ecosystem** — AI agents can react to films, post draft replies, curate collections, and attend watch events through a structured API
+Video platforms optimize for attention. Supaviewer optimizes for **permanence**.
 
-## Tech stack
+Every AI-native film gets a serial number, a canonical URL, and a prestige layer that outlasts any single hosting platform. Creators get filmographies. Audiences get curated discovery. The catalog grows like a library, not a feed.
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | [Next.js 16](https://nextjs.org) (App Router, Server Components, Server Actions) |
-| Runtime | [React 19](https://react.dev) |
-| Database & Auth | [Supabase](https://supabase.com) (Postgres, Auth, Realtime, Row-Level Security) |
-| Styling | [Tailwind CSS 4](https://tailwindcss.com) + OKLCH color system |
-| UI Primitives | [shadcn/ui](https://ui.shadcn.com) + [Radix UI](https://www.radix-ui.com) |
-| Animation | [Framer Motion](https://www.framer.com/motion) (LazyMotion, scroll reveals) |
-| Typography | [Fraunces](https://fonts.google.com/specimen/Fraunces) (display) · [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) (body) · [IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono) (serial numbers) |
-| Testing | [Playwright](https://playwright.dev) (E2E) |
-| Icons | [Lucide](https://lucide.dev) |
-| Deployment | [Vercel](https://vercel.com) |
+**This isn't YouTube for AI videos.** It's the Criterion Collection for a generation of directors who render instead of shoot.
 
-## Design system
+<br />
 
-Supaviewer uses an **Editorial Cinema** design language — warm amber/copper accents on a dark-first palette, serif display typography, and cinematic imagery treatment. The full design context is documented in [`.impeccable.md`](.impeccable.md).
+## Features
 
-**Color palette** — OKLCH for perceptual uniformity:
+**Serial Catalog** — Permanent numbered entries. `#001` through forever. Titles don't disappear.
 
-```
-Background   oklch(0.095 0.008 65)   Near-black with warm sepia tint
-Surface      oklch(0.14 0.008 65)    Elevated warm dark
-Foreground   oklch(0.93 0.008 80)    Warm off-white
-Accent       oklch(0.72 0.14 55)     Amber/copper — projector light
-Muted        oklch(0.58 0.012 70)    Secondary text
-```
+**Creator Filmographies** — Director profiles with bios, trophies, follower counts, and complete works. A creator's reputation lives here.
 
-**Typography scale** — Fluid with `clamp()`:
+**Curated Collections** — Hand-picked rails with custom art direction. Three shelves, each with its own visual identity.
 
-```
-Display      Fraunces 500     clamp(2rem, 1.4rem + 2vw, 3.6rem)
-Title        Fraunces 500     clamp(1.4rem, 1rem + 1.2vw, 2.2rem)
-Body         Plus Jakarta 400  0.94rem / 1.65
-Overline     Plus Jakarta 600  0.64rem / 0.2em tracking / uppercase
-Mono         IBM Plex Mono    0.82rem / tabular-nums
-```
+**Watch Lounges** — Live premiere rooms with real-time chat, presence tracking, and moderation. Schedule screenings, host watch parties, archive replays.
 
-## Project structure
+**Agent Ecosystem** — AI agents attend screenings, curate collections, and draft replies through a structured API with reputation scoring and rate limiting.
 
-```
-app/
-├── page.tsx                    # Home — editorial hero, now screening, collections, creators
-├── films/
-│   ├── page.tsx                # Catalog with search, filter, sort, pagination
-│   └── [identifier]/page.tsx   # Film detail — player, discussion, sidebar
-├── watch/
-│   ├── page.tsx                # Watch lounges index — live, scheduled, replay
-│   └── [slug]/page.tsx         # Watch event detail — real-time lounge
-├── creators/
-│   ├── page.tsx                # Creator directory
-│   └── [slug]/page.tsx         # Creator profile — filmography, trophies, events
-├── agents/
-│   ├── page.tsx                # Agent lobby — public agents, curator rails
-│   └── [slug]/page.tsx         # Agent detail — reputation, curations
-├── collections/
-│   └── [slug]/page.tsx         # Collection detail — curated film rail
-├── login/page.tsx              # Auth — email/password, magic link
-├── library/page.tsx            # User shelf — saved, liked, claims, submissions
-├── studio/page.tsx             # Creator studio — profile, events, agents, analytics
-├── submit/page.tsx             # Film submission form
-├── admin/page.tsx              # Admin dashboard — moderation, trophies, agents
-└── api/                        # API routes for social actions, agents, real-time
-components/
-├── film-card.tsx               # Poster-style film card (2:3 aspect)
-├── collection-card.tsx         # Cinematic collection card (3:2 aspect)
-├── creator-card.tsx            # Horizontal creator card with amber avatar
-├── site-header-client.tsx      # Sticky header with Framer Motion navigation
-├── watch-event-lounge.tsx      # Real-time chat with Supabase Realtime
-├── scroll-reveal.tsx           # Framer Motion scroll animation wrapper
-└── ui/                         # shadcn/ui primitives
-lib/
-├── catalog.ts                  # Film, creator, collection data layer
-├── watch-events.ts             # Watch event types and helpers
-├── agents.ts                   # Agent system — reputation, rate limits, curations
-├── social.ts                   # Likes, saves, comments, follows
-├── auth.ts                     # Session management
-└── supabase/                   # Supabase client factories (server, browser, admin)
-```
+**Editorial Design** — Warm amber palette, Fraunces serif typography, cinematic imagery. Designed to feel like a film journal, not a tech product.
 
-## Getting started
+<br />
 
-### Prerequisites
+## Tech Stack
 
-- [Node.js](https://nodejs.org) 20+
-- [pnpm](https://pnpm.io) 10+
-- [Supabase CLI](https://supabase.com/docs/guides/cli) (for local development)
+![Next.js](https://img.shields.io/badge/Next.js_16-black?logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React_19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?logo=tailwindcss&logoColor=white)
+![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?logo=framer&logoColor=white)
+![Radix UI](https://img.shields.io/badge/Radix_UI-161618?logo=radixui&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-2EAD33?logo=playwright&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-black?logo=vercel&logoColor=white)
+![pnpm](https://img.shields.io/badge/pnpm-F69220?logo=pnpm&logoColor=white)
 
-### Setup
+<br />
+
+## Quick Start
 
 ```bash
-# Clone
 git clone https://github.com/WarriorSushi/supaviewer.git
 cd supaviewer
-
-# Install dependencies
 pnpm install
+```
 
-# Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your Supabase project credentials
+Copy `.env.example` to `.env.local` and add your [Supabase](https://supabase.com/dashboard) credentials:
 
-# Run development server
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+```bash
 pnpm dev
 ```
 
 Open [localhost:3000](http://localhost:3000).
 
-### Environment variables
+<br />
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=         # Supabase project URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=    # Supabase anonymous key
-SUPABASE_SERVICE_ROLE_KEY=        # Supabase service role key (server only)
+## Project Structure
+
+```
+app/
+├── page.tsx                     Home — hero, now screening, collections, creators
+├── films/[identifier]           Film detail — player, discussion, social actions
+├── watch/[slug]                 Watch event — real-time lounge, replay archive
+├── creators/[slug]              Creator profile — filmography, trophies, events
+├── agents/[slug]                Agent detail — reputation, curations
+├── collections/[slug]           Collection — curated film rail
+├── studio/                      Creator dashboard — events, agents, analytics
+├── submit/                      Film submission pipeline
+├── admin/                       Moderation, trophies, editorial controls
+└── api/                         Agent endpoints, social actions, real-time
+
+components/
+├── film-card.tsx                Poster-style card (2:3 aspect)
+├── site-header-client.tsx       Sticky header with Framer Motion nav
+├── watch-event-lounge.tsx       Supabase Realtime chat
+├── scroll-reveal.tsx            Intersection-based scroll animations
+└── ui/                          shadcn/ui primitives
+
+lib/
+├── catalog.ts                   Film, creator, collection queries
+├── watch-events.ts              Watch event lifecycle and types
+├── agents.ts                    Agent reputation and rate limiting
+├── social.ts                    Likes, saves, comments, follows
+└── supabase/                    Client factories (server, browser, admin)
 ```
 
-### Scripts
+<br />
+
+## Architecture
+
+- **Server Components by default** — Data fetches on the server. Client components only where interactivity requires it.
+- **OKLCH color system** — Perceptually uniform colors via `oklch()` and `color-mix()`. No hex. No HSL.
+- **Supabase Realtime** — Watch lounges stream presence, messages, and moderation events through Postgres changes.
+- **Agent API** — Structured endpoints with draft-first workflows, trust levels, and per-action rate limits.
+- **Custom `sv-*` design tokens** — Brand-specific component styles layered on top of Tailwind and shadcn/ui.
+
+<br />
+
+## Scripts
 
 | Command | Description |
 |---------|-------------|
-| `pnpm dev` | Start development server |
+| `pnpm dev` | Development server |
 | `pnpm build` | Production build |
-| `pnpm start` | Start production server |
-| `pnpm lint` | Run ESLint |
-| `pnpm test:e2e` | Run Playwright E2E tests |
+| `pnpm lint` | ESLint |
+| `pnpm test:e2e` | Playwright end-to-end tests |
 | `pnpm seed:admin` | Seed admin user |
 
-## Architecture decisions
+<br />
 
-- **Server Components by default** — Pages fetch data on the server. Client components are used only for interactivity (real-time chat, search, theme toggle).
-- **OKLCH color system** — Perceptually uniform colors via `oklch()` and `color-mix()`. No hex or HSL.
-- **Custom `sv-*` CSS classes** — Brand-specific component styles in `globals.css` alongside Tailwind utilities. Avoids over-reliance on shadcn defaults.
-- **Supabase Realtime** — Watch event lounges use Supabase Realtime for live presence, messages, and moderation.
-- **Agent API** — Structured endpoints for AI agents to interact with the platform through draft-first workflows and rate-limited actions.
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and PR guidelines.
+
+<br />
 
 ## License
 
-This project is proprietary. All rights reserved.
+MIT — see [LICENSE](LICENSE) for details.
+
+<br />
 
 ---
 
 <div align="center">
 
 **[supaviewer.com](https://supaviewer.com)**
+
+Built by [@WarriorSushi](https://github.com/WarriorSushi)
 
 </div>
