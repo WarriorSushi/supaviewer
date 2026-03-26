@@ -92,13 +92,13 @@ export default async function FilmDetailPage({ params, searchParams }: FilmDetai
   }
 
   const [creator, trendingFilms, session] = await Promise.all([
-    getCreatorBySlug(film.creatorSlug),
-    getTrendingFilms(8),
+    getCreatorBySlug(film.creatorSlug).catch(() => null),
+    getTrendingFilms(8).catch(() => []),
     getCurrentSessionProfile(),
   ]);
   const [socialState, primaryWatchEvent] = await Promise.all([
     getFilmSocialState(film.id, creator?.id ?? film.creatorId),
-    getPrimaryWatchEventForFilm(film.id),
+    getPrimaryWatchEventForFilm(film.id).catch(() => null),
   ]);
 
   const relatedFilms = trendingFilms.filter((entry) => entry.id !== film.id).slice(0, 6);

@@ -22,10 +22,10 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   const [featuredFilms, latestFilms, collections, creators] = await Promise.all([
-    getFeaturedFilms(8),
-    getLatestFilms(8),
-    getCollections(),
-    getCreators(4),
+    getFeaturedFilms(8).catch(() => []),
+    getLatestFilms(8).catch(() => []),
+    getCollections().catch(() => []),
+    getCreators(4).catch(() => []),
   ]);
 
   const heroFilm = featuredFilms[0];
