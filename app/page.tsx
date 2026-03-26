@@ -21,13 +21,12 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  try {
-    const [featuredFilms, latestFilms, collections, creators] = await Promise.all([
-      getFeaturedFilms(8).catch(() => []),
-      getLatestFilms(8).catch(() => []),
-      getCollections().catch(() => []),
-      getCreators(4).catch(() => []),
-    ]);
+  const [featuredFilms, latestFilms, collections, creators] = await Promise.all([
+    getFeaturedFilms(8).catch(() => []),
+    getLatestFilms(8).catch(() => []),
+    getCollections().catch(() => []),
+    getCreators(4).catch(() => []),
+  ]);
 
   const heroFilm = featuredFilms[0];
   const nowScreening = featuredFilms.slice(1, 5);
@@ -193,18 +192,4 @@ export default async function Home() {
       </section>
     </main>
   );
-  } catch (error) {
-    console.error("[home] Render failed:", error);
-    return (
-      <main className="mx-auto flex min-h-[70vh] w-full max-w-[96rem] flex-col items-center justify-center px-4 text-center sm:px-6 lg:px-10">
-        <p className="sv-overline">supaviewer.com</p>
-        <h1 className="mt-4 font-display text-3xl font-medium tracking-[-0.03em] text-foreground sm:text-4xl">
-          Supaviewer is loading.
-        </h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          The catalog is temporarily unavailable. Please refresh.
-        </p>
-      </main>
-    );
-  }
 }

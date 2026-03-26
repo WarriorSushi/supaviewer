@@ -8,7 +8,6 @@ import { usePathname } from "next/navigation";
 import { signOut } from "@/app/login/actions";
 import { BotIcon, CreatorIcon, HomeIcon, LibraryIcon, ReelsIcon } from "@/components/icons";
 import { CompactThemeToggle, ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Sheet,
