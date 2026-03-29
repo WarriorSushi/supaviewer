@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PublicRouteNotice } from "@/components/public-route-notice";
 import { ShareButton } from "@/components/share-button";
 import { SerialPill } from "@/components/serial-pill";
 import { buildFilmHref } from "@/lib/catalog";
@@ -21,6 +22,25 @@ export const metadata: Metadata = {
   },
 };
 
+async function loadWatchPageData<T>(
+  label: string,
+  loader: () => Promise<T>,
+  fallback: T,
+) {
+  try {
+    return {
+      data: await loader(),
+      failed: false,
+    };
+  } catch (error) {
+    console.error(`[watch] Failed to load ${label}:`, error);
+    return {
+      data: fallback,
+      failed: true,
+    };
+  }
+}
+
 function partitionEvents(events: Awaited<ReturnType<typeof getPublicWatchEvents>>) {
   return {
     live: events.filter((event) => event.phase === "live"),
@@ -36,7 +56,12 @@ function phaseChipClass(phase: string) {
 }
 
 export default async function WatchIndexPage() {
-  const events = await getPublicWatchEvents();
+  const eventsResult = await loadWatchPageData(
+    "public watch events",
+    getPublicWatchEvents,
+    [],
+  );
+  const events = eventsResult.data;
   const groups = partitionEvents(events);
 
   return (
@@ -70,6 +95,20 @@ export default async function WatchIndexPage() {
           </div>
         </div>
       </section>
+
+      {eventsResult.failed ? (
+        <section className="mt-8 sv-animate-in sv-stagger-1">
+          <PublicRouteNotice
+            description="Watch lounges are still reachable, but the live room index is reconnecting to its data source. This keeps the route readable while the event feed comes back."
+            eyebrow="Room reconnect"
+            primaryHref="/films"
+            primaryLabel="Browse films"
+            secondaryHref="/submit"
+            secondaryLabel="Open submissions"
+            title="Screening room data is temporarily syncing."
+          />
+        </section>
+      ) : null}
 
       {/* ── Room groups ── */}
       {[
@@ -155,7 +194,9 @@ export default async function WatchIndexPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-5 sv-body-sm">
-              No rooms in this state yet.
+              {eventsResult.failed
+                ? "Room data is reconnecting for this section."
+                : "No rooms in this state yet."}
             </div>
           )}
         </section>

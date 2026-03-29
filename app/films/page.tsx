@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CatalogSearchForm } from "@/components/catalog-search-form";
 import { FilmCard } from "@/components/film-card";
+import { PublicRouteNotice } from "@/components/public-route-notice";
 import { getFilmCatalogPage } from "@/lib/catalog";
 
 type FilmsPageProps = {
@@ -21,14 +22,47 @@ export const metadata: Metadata = {
   },
 };
 
+const emptyFilmCatalog = {
+  films: [],
+  total: 0,
+  page: 1,
+  pageSize: 24,
+  totalPages: 1,
+};
+
+async function loadFilmsPageData<T>(
+  label: string,
+  loader: () => Promise<T>,
+  fallback: T,
+) {
+  try {
+    return {
+      data: await loader(),
+      failed: false,
+    };
+  } catch (error) {
+    console.error(`[films] Failed to load ${label}:`, error);
+    return {
+      data: fallback,
+      failed: true,
+    };
+  }
+}
+
 export default async function FilmsPage({ searchParams }: FilmsPageProps) {
   const params = await searchParams;
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
-  const catalog = await getFilmCatalogPage({
-    ...params,
-    page,
-    pageSize: 24,
-  });
+  const catalogResult = await loadFilmsPageData(
+    "film catalog",
+    () =>
+      getFilmCatalogPage({
+        ...params,
+        page,
+        pageSize: 24,
+      }),
+    emptyFilmCatalog,
+  );
+  const catalog = catalogResult.data;
 
   function buildFilmsHref(nextPage: number) {
     const nextParams = new URLSearchParams();
@@ -77,11 +111,33 @@ export default async function FilmsPage({ searchParams }: FilmsPageProps) {
         </div>
       </section>
 
+      {catalogResult.failed ? (
+        <section className="mt-8 sv-animate-in sv-stagger-1">
+          <PublicRouteNotice
+            description="The browse index could not reach the live catalog source, so this page is holding a stable shell instead of throwing a production Server Component error."
+            eyebrow="Catalog reconnect"
+            primaryHref="/creators"
+            primaryLabel="Meet the creators"
+            secondaryHref="/watch"
+            secondaryLabel="Open watch lounges"
+            title="Film listings are temporarily reconnecting."
+          />
+        </section>
+      ) : null}
+
       {/* ── Film grid ── */}
       <section className="mt-12 grid gap-5 sm:grid-cols-2 xl:grid-cols-4 sv-animate-in sv-stagger-1">
-        {catalog.films.map((film) => (
-          <FilmCard key={film.serial} film={film} />
-        ))}
+        {catalog.films.length ? (
+          catalog.films.map((film) => (
+            <FilmCard key={film.serial} film={film} />
+          ))
+        ) : (
+          <div className="rounded-[1.4rem] border border-border/60 bg-card/70 px-5 py-6 text-sm text-muted-foreground sm:col-span-2 xl:col-span-4">
+            {catalogResult.failed
+              ? "The live catalog is reconnecting. Film cards will return automatically when the data source is reachable."
+              : "No films matched this search."}
+          </div>
+        )}
       </section>
 
       {/* ── Pagination ── */}

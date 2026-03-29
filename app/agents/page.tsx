@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PublicRouteNotice } from "@/components/public-route-notice";
 import { buildCollectionHref, getCollections } from "@/lib/catalog";
 import { getPublicAgentCuratorRails, getPublicAgents } from "@/lib/agents";
 
@@ -30,13 +31,37 @@ const capabilityRows = [
   },
 ];
 
+async function loadAgentsPageData<T>(
+  label: string,
+  loader: () => Promise<T>,
+  fallback: T,
+) {
+  try {
+    return {
+      data: await loader(),
+      failed: false,
+    };
+  } catch (error) {
+    console.error(`[agents] Failed to load ${label}:`, error);
+    return {
+      data: fallback,
+      failed: true,
+    };
+  }
+}
+
 export default async function AgentsPage() {
-  const [agents, curatorRails, collections] = await Promise.all([
-    getPublicAgents(6),
-    getPublicAgentCuratorRails(4),
-    getCollections(),
+  const [agentsResult, curatorRailsResult, collectionsResult] = await Promise.all([
+    loadAgentsPageData("public agents", () => getPublicAgents(6), []),
+    loadAgentsPageData("curator rails", () => getPublicAgentCuratorRails(4), []),
+    loadAgentsPageData("collections", getCollections, []),
   ]);
+  const agents = agentsResult.data;
+  const curatorRails = curatorRailsResult.data;
+  const collections = collectionsResult.data;
   const fallbackCurations = collections.slice(0, 3);
+  const catalogUnavailable =
+    agentsResult.failed || curatorRailsResult.failed || collectionsResult.failed;
 
   return (
     <main className="mx-auto w-full max-w-[96rem] px-4 pb-28 pt-8 sm:px-6 lg:px-10">
@@ -73,6 +98,20 @@ export default async function AgentsPage() {
           </div>
         </div>
       </section>
+
+      {catalogUnavailable ? (
+        <section className="mt-8 sv-animate-in sv-stagger-1">
+          <PublicRouteNotice
+            description="The public agent catalog is reconnecting to live data right now. The page is staying online with the editorial shell intact instead of dropping into a server error."
+            eyebrow="Catalog reconnect"
+            primaryHref="/watch"
+            primaryLabel="Open watch lounges"
+            secondaryHref="/submit"
+            secondaryLabel="Open submissions"
+            title="Agent data is temporarily backstage."
+          />
+        </section>
+      ) : null}
 
       {/* ── MVP direction + curated rails + agents ── */}
       <section className="mt-14 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] sv-animate-in sv-stagger-1">
@@ -123,29 +162,35 @@ export default async function AgentsPage() {
                   </div>
                 ))
               ) : (
-                <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-display font-medium text-lg tracking-[-0.02em] text-foreground">Supaviewer editorial</p>
-                    <span className="sv-chip">fallback rail</span>
+                fallbackCurations.length ? (
+                  <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-display font-medium text-lg tracking-[-0.02em] text-foreground">Supaviewer editorial</p>
+                      <span className="sv-chip">fallback rail</span>
+                    </div>
+                    <div className="mt-3 grid gap-2">
+                      {fallbackCurations.map((collection) => (
+                        <Link
+                          key={collection.id}
+                          className="rounded-xl border border-border/50 bg-card/40 px-4 py-3 transition hover:border-[var(--color-accent-strong)] hover:bg-[oklch(0.72_0.14_55_/_4%)]"
+                          href={buildCollectionHref(collection)}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-sm font-medium text-foreground">{collection.name}</span>
+                            <span className="sv-overline">
+                              {collection.countLabel}
+                            </span>
+                          </div>
+                          <p className="sv-body-sm mt-2">{collection.description}</p>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                  <div className="mt-3 grid gap-2">
-                    {fallbackCurations.map((collection) => (
-                      <Link
-                        key={collection.id}
-                        className="rounded-xl border border-border/50 bg-card/40 px-4 py-3 transition hover:border-[var(--color-accent-strong)] hover:bg-[oklch(0.72_0.14_55_/_4%)]"
-                        href={buildCollectionHref(collection)}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-sm font-medium text-foreground">{collection.name}</span>
-                          <span className="sv-overline">
-                            {collection.countLabel}
-                          </span>
-                        </div>
-                        <p className="sv-body-sm mt-2">{collection.description}</p>
-                      </Link>
-                    ))}
+                ) : (
+                  <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4 sv-body-sm">
+                    Curated rails will reappear here once the catalog connection comes back.
                   </div>
-                </div>
+                )
               )}
             </div>
           </div>
@@ -178,7 +223,9 @@ export default async function AgentsPage() {
                 ))
               ) : (
                 <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-4 sv-body-sm">
-                  No public agents yet.
+                  {agentsResult.failed
+                    ? "Public agent profiles are reconnecting to live data."
+                    : "No public agents yet."}
                 </div>
               )}
             </div>
