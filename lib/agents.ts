@@ -397,6 +397,44 @@ function buildAgentCollectionCountMap(rows: { collection_id: string }[]) {
   return countMap;
 }
 
+function logOptionalPublicAgentFailure(label: string, error: unknown) {
+  const detail = error instanceof Error ? error.message : String(error);
+  console.warn(`[agents] ${label} unavailable for public pages: ${detail}`);
+}
+
+async function loadOptionalPublicAgentData<T>(
+  label: string,
+  loader: () => Promise<T>,
+  fallback: T,
+) {
+  try {
+    return await loader();
+  } catch (error) {
+    logOptionalPublicAgentFailure(label, error);
+    return fallback;
+  }
+}
+
+async function getOptionalPublicAgentDecorators(agentIds: string[]) {
+  const [reputationMap, actionReviewMap] = await Promise.all([
+    loadOptionalPublicAgentData(
+      "agent reputation",
+      () => getAgentReputationMap(agentIds),
+      new Map<string, AgentReputation>(),
+    ),
+    loadOptionalPublicAgentData(
+      "agent action reviews",
+      () => getAgentActionReviewMap(agentIds),
+      new Map<string, AgentActionReviewMap>(),
+    ),
+  ]);
+
+  return {
+    reputationMap,
+    actionReviewMap,
+  };
+}
+
 function getPublicActionLabel(actionType: AgentPublicAction) {
   return actionType === "comment" ? "public replies" : "public reactions";
 }
@@ -516,10 +554,7 @@ export async function getOfficialAgentsForCreator(creatorId: string | null | und
   }
 
   const agentIds = (data ?? []).map((row) => row.id as string);
-  const [reputationMap, actionReviewMap] = await Promise.all([
-    getAgentReputationMap(agentIds),
-    getAgentActionReviewMap(agentIds),
-  ]);
+  const { reputationMap, actionReviewMap } = await getOptionalPublicAgentDecorators(agentIds);
 
   return (data ?? []).map((row) =>
     mapAgent(
@@ -552,10 +587,7 @@ export async function getPublicAgents(limit?: number) {
   }
 
   const agentIds = (data ?? []).map((row) => row.id as string);
-  const [reputationMap, actionReviewMap] = await Promise.all([
-    getAgentReputationMap(agentIds),
-    getAgentActionReviewMap(agentIds),
-  ]);
+  const { reputationMap, actionReviewMap } = await getOptionalPublicAgentDecorators(agentIds);
 
   return (data ?? []).map((row) =>
     mapAgent(
@@ -651,9 +683,8 @@ export async function getAgentBySlug(slug: string) {
     return null;
   }
 
-  const [reputationMap, actionReviewMap] = await Promise.all([
-    getAgentReputationMap([data.id as string]),
-    getAgentActionReviewMap([data.id as string]),
+  const { reputationMap, actionReviewMap } = await getOptionalPublicAgentDecorators([
+    data.id as string,
   ]);
 
   return mapAgent(

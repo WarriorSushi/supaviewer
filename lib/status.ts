@@ -65,6 +65,24 @@ type CreatorStatusSummary = {
   trophies: Trophy[];
 };
 
+function logOptionalStatusFailure(label: string, error: unknown) {
+  const detail = error instanceof Error ? error.message : String(error);
+  console.warn(`[status] ${label} unavailable: ${detail}`);
+}
+
+async function loadOptionalStatusData<T>(
+  label: string,
+  loader: () => Promise<T>,
+  fallback: T,
+) {
+  try {
+    return await loader();
+  } catch (error) {
+    logOptionalStatusFailure(label, error);
+    return fallback;
+  }
+}
+
 function firstRelation<T>(value: T | T[] | null | undefined) {
   if (Array.isArray(value)) {
     return value[0] ?? null;
@@ -189,10 +207,18 @@ export async function getFilmStatusMap(
   films: { id: string; serial_number: number }[],
 ) {
   const [founderBadges, trophyDefinitions, manualAssignments, signalAssignments] = await Promise.all([
-    getFounderBadges(),
-    getTrophyDefinitions(),
-    getManualTrophyAssignments(),
-    getSignalTrophyAssignments(),
+    loadOptionalStatusData("founder badges", getFounderBadges, [] as FounderBadge[]),
+    loadOptionalStatusData("trophy definitions", getTrophyDefinitions, [] as TrophyDefinitionRow[]),
+    loadOptionalStatusData(
+      "manual trophy assignments",
+      getManualTrophyAssignments,
+      [] as TrophyAssignmentRow[],
+    ),
+    loadOptionalStatusData(
+      "live signal trophies",
+      getSignalTrophyAssignments,
+      [] as SignalTrophyRow[],
+    ),
   ]);
 
   const trophyDefinitionMap = new Map(trophyDefinitions.map((definition) => [definition.slug, definition]));
@@ -251,9 +277,13 @@ export async function getCreatorStatusMap(
 ) {
   const creatorIds = creators.map((creator) => creator.id);
   const [founderBadges, trophyDefinitions, manualAssignments] = await Promise.all([
-    getFounderBadges(),
-    getTrophyDefinitions(),
-    getManualTrophyAssignments(),
+    loadOptionalStatusData("founder badges", getFounderBadges, [] as FounderBadge[]),
+    loadOptionalStatusData("trophy definitions", getTrophyDefinitions, [] as TrophyDefinitionRow[]),
+    loadOptionalStatusData(
+      "manual trophy assignments",
+      getManualTrophyAssignments,
+      [] as TrophyAssignmentRow[],
+    ),
   ]);
 
   const statusMap = new Map<string, CreatorStatusSummary>();
